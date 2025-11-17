@@ -1,0 +1,58 @@
+Requisitos projeto final PBE1
+    Cliente
+        Endereço (pode conter mais de um)
+            Conter endereço completo
+            Cálculo de CEP
+            Requisitos de endereço: logradouro, número, bairro, cidade, estado e CEP
+
+        Email
+            Conter endereço obrigatório de email
+
+        CPF
+            Conter cadastro obrigatório de CPF
+            Confirmação de CPF
+            Validação do número do CPF (se tem até 11 dígitos ou se está repetindo no sistema)
+            Pesquisar cliente a partir de seu CPF
+
+        Telefone (pode conter mais de um)
+            Conter cadastro obrigatório de telefone
+            Validação do número de telefone (se tem até 12 dígitos)
+
+        Nome
+            Conter nome completo do cliente
+            Pesquisar cliente a partir de seu nome
+
+*pesquisar cliente a partir do seu nome e CPF
+---------------------------------------------------------------------------------------------------------
+
+    Pedidos
+        Relacionar cliente via ID inserido na tabela respectiva
+        Conter data do pedido (usar DATE)
+        Conter informação sobre o tipo da entrega
+        2 valores (normal ou urgente)
+        Conter a distância do local da empresa até o local de entrega EM KM;
+        Conter o peso da carga que deve ser entregue EM KG; 
+        VALOR BASE DA ENTREGA:  
+            Deve ser dado por KM 
+            É obtido através da soma do valor da distância + valor do peso
+            Se o tipo da entrega for dado como urgente aplica-se um acréscimo de 20% sobre o valor base
+        VALOR BASE DO PESO:
+            Deve ser dado por KG
+---------------------------------------------------------------------------------------------------------
+
+    Entregas
+        Relacionar pedido via ID inserido na tabela respectiva
+        VALOR DA DISTÂNCIA E ACRÉSCIMO
+            Obtido através da distância da entrega * o valor cobrado por KM
+            O acréscimo só é adicionado SE o tipo da entrega for dado como urgente. 
+            Se for dado como urgente aplica-se um acréscimo de 20% sobre o valor base. 
+        VALOR DO PESO
+            É obtido através do peso da carga * o valor cobrado por KG
+        VALOR FINAL E DESCONTO
+            O valor final é a soma do valor base + o acréscimo (caso o cenário seja aplicável) 
+            O desconto só será aplicado se o valor final da entrega for um resultado acima de R$ 500.00
+            Caso o valor final for acima de R$ 500.00, aplicar um desconto de 10% do valor total
+        TAXA EXTRA
+            Se o peso da carga ultrapassar os 50 kg, deve ser adicionada uma taxa fixa de R$15.00.
+        Status entrega
+            Deve conter campos de atualização de cada entrega: calculado, em trânsito, entregue, cancelado
