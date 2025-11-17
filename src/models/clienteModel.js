@@ -7,7 +7,7 @@ const clienteModel = {
         const [rows] = await pool.query(sql, values);
         return rows;
     },
-    selecionarPorCpf: async (cpfCliente) => {
+    selecionarCpf: async (cpfCliente) => {
         const sql = 'SELECT * FROM clientes WHERE cpfCliente=?;';
         const values = [cpfCliente];
         const [rows] = await pool.query(sql, values);
@@ -43,7 +43,7 @@ const clienteModel = {
             throw error;
         }
     },
-    selecionaNomeCliente: async (nomeCliente) => {
+    selecionarNomeCliente: async (nomeCliente) => {
         const sql = `SELECT * FROM clientes WHERE nomeCliente LIKE ?;`;
         const values = [nomeCliente]
         const [rows] = await pool.query(sql, values);
