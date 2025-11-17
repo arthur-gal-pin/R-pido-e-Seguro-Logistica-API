@@ -1,0 +1,143 @@
+const pool = require('../config/db');
+
+const clienteModel = {
+    selecionarCliente: async (idCliente) => {
+        const sql = idCliente ? 'SELECT * FROM clientes WHERE idCliente=?;' : 'SELECT * FROM clientes;';
+        const values = [idCliente];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    selecionarPorCpf: async (cpfCliente) => {
+        const sql = 'SELECT * FROM clientes WHERE cpfCliente=?;';
+        const values = [cpfCliente];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    selecionarPorCpfUpdate: async (cpfCliente, idCliente) => {
+        const sql = 'SELECT * FROM clientes WHERE cpfCliente = ? AND idCliente <> ?;';
+        const values = [cpfCliente, idCliente];
+        const [rows] = await pool.query(sql, values);
+        console.log(rows);
+        return rows;
+    },
+    addCliente: async (cpfCliente, nomeCliente, sobrenomeCliente, emailCliente, numeroTelefoneCliente, tipoTelefone, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento) => {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+            //Primeira etapa: adicionar as informações do cliente na tabela de clientes.
+            const sqlClientes = 'INSERT INTO clientes (nomeCliente, cpfCliente, sobrenomeCliente, emailCliente) VALUES (?,?,?,?);';
+            const valuesCliente = [nomeCliente, cpfCliente, sobrenomeCliente, emailCliente];
+            const [rowsCliente] = await pool.query(sqlClientes, valuesCliente);
+            //Segunda etapa: adicionar as informações do telfone do cliente na tabela de telefones.
+            const sqlTelefone = 'INSERT INTO telefones (idClienteFK, numero, tipoTelefone) VALUES (?,?,?);';
+            const valuesTelefone = [rowsCliente.insertId, numeroTelefoneCliente, tipoTelefone]
+            const [rowsTelefone] = await pool.query(sqlTelefone, valuesTelefone);
+            //Terceira etapa: adicionar as informações do endereço do cliente na tabela de endereços.
+            const sqlEndereco = 'INSERT INTO enderecos (idClienteFK, logradouro, numero, bairro, cidade, estado, cep, complemento) VALUES(?,?,?,?,?,?,?,?); ';
+            const valuesEndereco = [rowsCliente.insertId, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento]
+            const [rowsEndereco] = await pool.query(sqlEndereco, valuesEndereco);
+            connection.commit();
+            return { rowsCliente, rowsEndereco, rowsTelefone };
+        } catch (error) {
+            connection.rollback();
+            throw error;
+        }
+    },
+    selecionaNomeCliente: async (nomeCliente) => {
+        const sql = `SELECT * FROM clientes WHERE nomeCliente LIKE ?;`;
+        const values = [nomeCliente]
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    updateCliente: async (idCliente, cpfCliente, nomeCLiente, sobrenomeCliente, emailCliente) => {
+        const sql = 'UPDATE clientes SET nomeCliente = ?, cpfCliente = ?, sobrenomeCliente = ?, emailCliente = ? WHERE idCliente = ?;';
+        const values = [nomeCLiente, cpfCliente, sobrenomeCliente, emailCliente, idCliente];
+        const [rows] = await pool.query(sql, values);
+        console.log(rows);
+        return rows;
+    },
+    deleteCliente: async (idCliente) => {
+        const sql = 'DELETE FROM clientes WHERE idCliente = ?;';
+        const [rows] = await pool.query(sql, idCliente);
+        console.log(rows);
+        return rows;
+    }
+}
+const telefoneModel = {
+    selecionarTelefoneId: async (idTelefone) => {
+        const sql = idTelefone ? 'SELECT * FROM telefones WHERE idTelefone=?;' : 'SELECT * FROM telefones;';
+        const values = [idTelefone];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    selecionarTelefoneCliente: async (idClienteFK) => {
+        const sql = 'SELECT * FROM telefones WHERE idClienteFK=?;';
+        const values = [idClienteFK];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    addTelefone: async (pIdClienteFK, pNumero, pTipoTelefone) => {
+        const sql = 'INSERT INTO telefones (idClienteFK, numero, tipoTelefone) VALUES (?,?,?);';
+        const values = [pIdClienteFK, pNumero, pTipoTelefone];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    updateTelefone: async (idTelefone, idClienteFK, numeroTelefoneCliente, tipoTelefone) => {
+        const sql = 'UPDATE telefones SET numero = ?, tipoTelefone = ? WHERE idTelefone = ? AND idClienteFK = ?;';
+        const values = [numeroTelefoneCliente, tipoTelefone, idTelefone, idClienteFK];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    deletarTelefone: async (idTelefone, idClienteFK) => {
+        const sql = 'DELETE FROM telefones WHERE idTelefone = ? AND idClienteFK = ?;';
+        const values = [idTelefone, idClienteFK];
+        const [rows] = await pool.query(sql, values);;
+        console.log(rows);
+        return rows;
+    }
+}
+
+const enderecoModel = {
+    selecionarEnderecoId: async (idEndereco) => {
+        const sql = idEndereco ? 'SELECT * FROM enderecos WHERE idEndereco=?;' : 'SELECT * FROM enderecos;';
+        const values = [idEndereco];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    selecionarEnderecoCliente: async (idClienteFK) => {
+        const sql = 'SELECT * FROM enderecos WHERE idClienteFK = ?;';
+        const values = [idClienteFK];
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    addEndereco: async (idClienteFK, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento) => {
+        const sql = 'INSERT INTO enderecos (idClienteFK, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento) VALUES (?, ?, ?, ?, ?, ?, ?, ?);';
+        const values = [idClienteFK, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento];
+        const [rows] = await pool.query(sql, values);
+        console.log(rows);
+        return rows;
+    },
+    alterarEndereco: async (idEndereco, idClienteFK, tipoEndereco, novoValor) => {
+        // Lista de colunas permitidas para evitar Injeção SQL
+        const camposPermitidos = ['logradouro', 'numero', 'bairro', 'cidade', 'estado', 'cep', 'complemento'];
+
+        if (!camposPermitidos.includes(tipoEndereco)) {
+            throw new Error(`Campo inválido: ${tipoEndereco}`);
+        }
+
+        // O nome da coluna é inserido diretamente, mas o valor ainda usa placeholder.
+        const sql = `UPDATE enderecos SET ${tipoEndereco} = ? WHERE idEndereco = ? AND idClienteFK = ?;`;
+        const values = [novoValor, idEndereco, idClienteFK];
+
+        const [rows] = await pool.query(sql, values);
+        return rows;
+    },
+    deletarEndereco: async (idEndereco, idClienteFK) => {
+        const sql = 'DELETE FROM enderecos WHERE idEndereco = ? AND idClienteFK = ?;';
+        const values = [idEndereco, idClienteFK];
+        const [rows] = await pool.query(sql, values);
+        console.log(rows);
+        return rows;
+    }
+}
+module.exports = { clienteModel, enderecoModel, telefoneModel };
