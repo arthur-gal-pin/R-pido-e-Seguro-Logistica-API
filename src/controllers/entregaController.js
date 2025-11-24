@@ -40,16 +40,16 @@ const entregaController = {
     },
     atualizarEntrega: async (req, res) => {
         try {
-            const idPedidoFK = Number(req.params.idPedidoFK);
+            const idEntrega = Number(req.params.idEntrega);
             const { statusEntrega } = req.body;
             const situacaoEntrega = padronizarTexto(statusEntrega);
-            if (isNaN(idPedidoFK) || idPedidoFK == undefined || !idPedidoFK || idPedidoFK <= 0 || !Number.isInteger(idPedidoFK)) {
+            if (isNaN(idEntrega) || idEntrega == undefined || !idEntrega || idEntrega <= 0 || !Number.isInteger(idEntrega)) {
                 return res.status(400).json({ message: "Você deve inserir um número inteiro maior que zero para o campo de idPedidoFK" });
             }
             if (situacaoEntrega !== "calculado" && situacaoEntrega !== "transito" && situacaoEntrega !== "entregue" && situacaoEntrega !== "cancelado") {
                 return res.status(400).json({ message: "Você deve inserir um dos quatro possíveis status de entrega: calculado, transito, entregue e cancelado." });
             }
-            const resultado = await entregaModel.updateEntrega(idPedidoFK, situacaoEntrega);
+            const resultado = await entregaModel.updateEntrega(idEntrega, situacaoEntrega);
             return res.status(200).json({ message: "Registro incluído com sucesso!", data: resultado });
         } catch (error) {
             console.error(error);

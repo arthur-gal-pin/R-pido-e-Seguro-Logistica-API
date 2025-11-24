@@ -54,15 +54,15 @@ const entregaModel = {
             }
         }
     },
-    updateEntrega: async (idEntrega, idPedidoFK, statusEntrega) => {
+    updateEntrega: async (idEntrega, statusEntrega) => {
         const sql = "UPDATE entregas SET statusEntrega = ? WHERE idEntrega = ? AND idPedidoFK = ?;";
         const values = [statusEntrega, idEntrega, idPedidoFK];
         const rows = await pool.query(sql, values);
         return rows;
     },
-    deleteEntrega: async (idEntrega, idPedidoFK) => {
-        const sql = "DELETE FROM entregas WHERE idEntrega = ? AND idPedidoFK = ?;";
-        const values = [idEntrega, idPedidoFK];
+    deleteEntrega: async (idEntrega) => {
+        const sql = "DELETE FROM entregas WHERE idEntrega = ?;";
+        const values = [idEntrega];
         const rows = await pool.query(sql, values);
         return rows;
     }
