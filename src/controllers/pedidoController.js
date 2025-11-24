@@ -17,7 +17,13 @@ const pedidoController = {
             if (!idCliente || !urgencia || !distancia || !peso || !valorItem || !valorDistancia) {
                 return res.status(400).json({ message: 'Por favor, verifique os dados adicionados e envie novamente' });
             }
-            if (true) { };
+
+            if (!urgencia || typeof urgencia !== 'string' && urgencia !== "urgente" && urgencia !== 'nao urgente') {
+                return res.status(400).json({ message: "Valores para registro inválidos (urgência deve ser apenas 'urgente' ou 'nao urgente')." });
+            }
+            if (isNaN(distancia) || isNaN(peso) || isNaN(valorItem) || isNaN(valorDistancia)) {
+                return res.status(400).json({ message: "Valores para registro inválidos (valores que precisam ser números não são.)." });
+            };
 
             const resultado = await pedidoModel.insertPedido(idCliente, urgencia, distancia, peso, valorItem, valorDistancia)
             res.status(201).json({ message: 'Pedido incluído com sucesso', data: resultado });
@@ -33,7 +39,7 @@ const pedidoController = {
                 return res.status(400).json({ message: 'Por favor, forneça um id válido' });
             }
             const resultado = await pedidoModel.selectPedido(pedidoId);
-             res.status(200).json({ message: 'Lista dos pedidos', data: resultado });
+            res.status(200).json({ message: 'Lista dos pedidos', data: resultado });
 
         } catch (error) {
             console.error(error);
