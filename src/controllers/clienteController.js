@@ -1,29 +1,36 @@
 const { clienteModel, telefoneModel, enderecoModel } = require('../models/clienteModel');
 
 const removerAcentos = (texto) => {
+    // Garante que o texto existe antes de tentar normalizar
+    if (!texto) return '';
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 const clienteController = {
     buscarClientes: async (req, res) => {
         try {
+            // Se req.query.id for undefined, Number(req.query.id) resulta em NaN, que é falsy.
+            // Se for string vazia, resulta em 0, que é falsy.
             const id = Number(req.query.id);
-            if (!id) {
-                const resultado = await clienteModel.selecionarCliente(id);
-                if (resultado.length === 0 || !resultado) {
+
+            // Bloco para buscar todos os clientes (ID não fornecido ou inválido)
+            if (!id || isNaN(id) || id <= 0 || !Number.isInteger(id)) {
+                const resultado = await clienteModel.selecionarCliente();
+
+                if (resultado.length === 0) {
                     return res.status(200).json({ message: "Não há nenhum cliente cadastrado na base de dados no momento." });
                 }
                 return res.status(200).json({ message: "Resultado dos dados listados:", data: resultado });
-            } else {
-                if (!Number.isInteger(id) || id <= 0) {
-                    return res.status(400).json({ message: "Forneça um identificador (id) válido." });
-                }
-                const resultado = await clienteModel.selecionarCliente(id);
-                if (resultado.length === 0) {
-                    return res.status(404).json({ message: "O ID em questão não possui cliente algum cadastrado." });
-                }
-                return res.status(200).json({ message: "Resultado dos dados listados", data: resultado });
             }
+
+            // Bloco para buscar cliente por ID específico (ID válido)
+            const resultado = await clienteModel.selecionarCliente(id);
+
+            if (resultado.length === 0) {
+                return res.status(404).json({ message: "O ID em questão não possui cliente algum cadastrado." });
+            }
+            return res.status(200).json({ message: "Resultado dos dados listados", data: resultado });
+
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
@@ -31,15 +38,21 @@ const clienteController = {
     },
     buscarClientePorCpf: async (req, res) => {
         try {
-            const cpf = (req.params.cpfCliente).replace(/\./g, "");
-            if (!cpf || cpf.length != 11) {
-                return res.status(400).json({ message: "Forneça um identificador (CPF) válido." });
+            const cpfParam = req.params.cpfCliente || '';
+            const cpf = cpfParam.replace(/\./g, "").replace(/-/g, "").trim();
+
+            if (!cpf || cpf.length !== 11) {
+                return res.status(400).json({ message: "Forneça um identificador (CPF) válido (11 dígitos, apenas números)." });
             }
+
             const resultado = await clienteModel.selecionarCpf(cpf);
+
             if (resultado.length === 0) {
-                throw new Error({ message: "O ID em questão não possui cliente algum cadastrado." });
+                return res.status(404).json({ message: "O CPF em questão não possui cliente algum cadastrado." });
             }
+
             return res.status(200).json({ message: "Resultado dos dados listados", data: resultado });
+
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
@@ -47,20 +60,55 @@ const clienteController = {
     },
     adicionarCliente: async (req, res) => {
         try {
-            let { cpfCliente, nomeCliente } = req.body;
-            cpfCliente = cpfCliente.replace(/\./g, "");
-            if (!cpfCliente || cpfCliente.length != 11 || !String(nomeCliente) || nomeCliente.length < 3) {
-                return res.status(400).json({ message: "Valores para registro inválidos." });
+            let {
+                cpfCliente, nomeCliente, sobrenomeCliente, emailCliente,
+                numeroTelefoneCliente, tipoTelefone,
+                logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento
+            } = req.body;
+
+            // --- Validação do Cliente ---
+            cpfCliente = cpfCliente ? cpfCliente.replace(/\./g, "").replace(/-/g, "").trim() : '';
+            if (!cpfCliente || cpfCliente.length !== 11) {
+                return res.status(400).json({ message: "CPF inválido (11 dígitos)." });
+            }
+            if (!nomeCliente || nomeCliente.trim().length < 3 || !sobrenomeCliente || sobrenomeCliente.trim().length < 3) {
+                return res.status(400).json({ message: "Nome e Sobrenome são obrigatórios (mín 3 caracteres)." });
+            }
+            if (!emailCliente || emailCliente.trim().length < 10) {
+                return res.status(400).json({ message: "E-mail inválido (mín 10 caracteres)." });
             }
 
+            // --- Validação do Telefone ---
+            if (!numeroTelefoneCliente || numeroTelefoneCliente.trim().length === 0) {
+                return res.status(400).json({ message: "Número de telefone é obrigatório." });
+            }
+            tipoTelefone = tipoTelefone ? tipoTelefone.toLowerCase().trim() : '';
+            if (tipoTelefone !== 'fixo' && tipoTelefone !== 'movel') {
+                return res.status(400).json({ message: "Tipo de telefone deve ser 'fixo' ou 'movel'." });
+            }
+
+            // --- Validação do Endereço ---
+            if (!logradouroCliente || !numeroEnderecoCliente || !bairro || !cidade || !estado || !cep) {
+                return res.status(400).json({ message: "Dados de endereço incompletos (logradouro, numero, bairro, cidade, estado, cep são obrigatórios)." });
+            }
+
+            // --- Checagem de Duplicidade ---
             const consultaCpf = await clienteModel.selecionarCpf(cpfCliente);
 
-            if (consultaCpf.length === 0) {
-                const resultado = await clienteModel.addCliente(cpfCliente, nomeCliente);
-                return res.status(200).json({ message: "Registro Incluído com Sucesso.", result: resultado });
-            } else {
-                res.status(409).json({ message: 'Ocorreu um erro ao incluir o registro. O CPF inserido foi igual a um já cadastrado na base de dados.' });
+            if (consultaCpf.length > 0) {
+                return res.status(409).json({ message: 'Ocorreu um erro. O CPF inserido já está cadastrado.' });
             }
+
+            // --- Chamada da Transação ---
+            const resultado = await clienteModel.addCliente(
+                cpfCliente, nomeCliente.trim(), sobrenomeCliente.trim(), emailCliente.trim(),
+                numeroTelefoneCliente.trim(), tipoTelefone,
+                logradouroCliente.trim(), numeroEnderecoCliente.trim(), bairro.trim(),
+                cidade.trim(), estado.trim(), cep.trim(),
+                complemento ? complemento.trim() : null
+            );
+
+            return res.status(201).json({ message: "Cliente, Telefone e Endereço incluídos com sucesso via transação.", data: resultado });
 
         } catch (error) {
             console.error(error);
@@ -70,27 +118,43 @@ const clienteController = {
     atualizarCliente: async (req, res) => {
         try {
             const idCliente = Number(req.params.idCliente);
-            let { cpfCliente, nomeCliente } = req.body;
-            cpfCliente = cpfCliente.replace(/\./g, "");
-            if (!cpfCliente || cpfCliente.length != 11 || !String(nomeCliente) || nomeCliente.length < 3) {
-                return res.status(400).json({ message: "Valores para registro inválidos." });
+            if (isNaN(idCliente) || !Number.isInteger(idCliente) || idCliente <= 0) {
+                return res.status(400).json({ message: "Forneça um identificador (idCliente) válido." });
             }
+
             const clienteAtual = await clienteModel.selecionarCliente(idCliente);
 
             if (!clienteAtual || clienteAtual.length === 0) {
-                throw new Error('Registro não localizado.');
+                return res.status(404).json({ message: 'Registro não localizado para o ID fornecido.' });
             }
 
-            const novoNome = nomeCliente.trim() ?? clienteAtual[0].cpfCliente;
-            const novoCpf = cpfCliente.trim() ?? clienteAtual[0].nomeCliente;
+            let { nomeCliente, cpfCliente, sobrenomeCliente, emailCliente } = req.body;
 
-            const consultaCpf = await clienteModel.selecionarPorCpfUpdate(cpfCliente, idCliente);
+            // Pré-processamento e validação básica dos campos
+            cpfCliente = cpfCliente ? cpfCliente.replace(/\./g, "").replace(/-/g, "").trim() : '';
+
+            if (!cpfCliente || cpfCliente.length !== 11 ||
+                typeof nomeCliente !== 'string' || nomeCliente.length < 3 ||
+                typeof sobrenomeCliente !== 'string' || sobrenomeCliente.length < 3 ||
+                typeof emailCliente !== 'string' || emailCliente.length < 10) {
+                return res.status(400).json({ message: "Valores para registro inválidos (CPF, Nome, Sobrenome ou E-mail incorretos/ausentes)." });
+            }
+
+
+
+            const novoNome = nomeCliente.trim() ?? clienteAtual[0].nomeCliente;
+            const novoSobrenome = sobrenomeCliente.trim() ?? clienteAtual[0].sobrenomeCliente;
+            const novoEmail = emailCliente.trim() ?? clienteAtual[0].emailCliente;
+            const novoCpf = cpfCliente || clienteAtual[0].cpfCliente;
+
+            // Verifica se o CPF limpo já existe para outro cliente (diferente do id sendo atualizado)
+            const consultaCpf = await clienteModel.selecionarPorCpfUpdate(novoCpf, idCliente);
 
             if (consultaCpf.length === 0) {
-                const resultado = await clienteModel.updateCliente(idCliente, novoCpf, novoNome);
+                const resultado = await clienteModel.updateCliente(idCliente, novoNome, novoCpf, novoSobrenome, novoEmail);
                 return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
             } else {
-                throw new Error('Ocorreu um erro ao incluir o registro. O CPF inserido  foi igual a um já cadastrado na base de dados.');
+                return res.status(409).json({ message: 'Ocorreu um erro ao atualizar o registro. O CPF inserido foi igual a um já cadastrado para outro cliente.' });
             }
 
         } catch (error) {
@@ -102,20 +166,24 @@ const clienteController = {
         try {
             const id = Number(req.params.idCliente);
             if (!id || id <= 0 || isNaN(id) || !Number.isInteger(id)) {
-                res.status(400).json({ message: "Você deve inserir um número inteiro para campo de ID." });
+                return res.status(400).json({ message: "Você deve inserir um número inteiro positivo para o campo de ID." });
             }
+
             const clienteSelecionado = await clienteModel.selecionarCliente(id);
 
             if (clienteSelecionado.length === 0) {
-                throw new Error("O ID em questão não possui cliente algum cadastrado.");
-            } else {
-                const resultado = await clienteModel.deleteCliente(id);
-                if (resultado.affectedRows === 1) {
-                    res.status(200).json({ message: 'Cliente excluído com sucesso', data: resultado });
-                } else {
-                    throw new Error("Não foi possível excluir o cliente.");
-                }
+                return res.status(404).json({ message: "O ID em questão não possui cliente algum cadastrado." });
             }
+
+            const resultado = await clienteModel.deleteCliente(id);
+
+            if (resultado && resultado.affectedRows === 1) {
+                res.status(200).json({ message: 'Cliente excluído com sucesso', data: resultado });
+            } else {
+                // Lança um erro se a exclusão falhar no Model
+                throw new Error("Não foi possível excluir o cliente (0 affectedRows).");
+            }
+
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
@@ -126,35 +194,24 @@ const clienteController = {
 const telefoneController = {
     buscarTelefoneId: async (req, res) => {
         try {
-            // 1. Tenta obter o ID do telefone da rota (req.params)
-            // Se req.params.idTelefone não existir ou for inválido, idTelefone será 0 ou NaN.
             const idTelefone = Number(req.params.idTelefone);
 
-            // Se o ID não for fornecido ou for inválido, busca todos.
-            // O `req.params` geralmente sempre tem um valor (mesmo que seja uma string vazia se a rota for mal definida),
+            // Bloco para buscar todos os telefones (ID não fornecido ou inválido)
             if (!idTelefone || idTelefone <= 0 || isNaN(idTelefone) || !Number.isInteger(idTelefone)) {
 
-                // 2. Busca Todos os Telefones (idTelefone é inválido/ausente)
-                // O modelo `selecionarTelefoneId` deve ser capaz de lidar com um ID inválido/nulo
-                // para retornar todos, assim como o `selecionarCliente` faz.
-                const resultado = await telefoneModel.selecionarTelefoneId(); // Passa sem ID (ou undefined)
+                const resultado = await telefoneModel.selecionarTelefoneId();
 
                 if (resultado.length === 0) {
-                    // Retorna 200 OK, mas sem conteúdo de telefone
                     return res.status(200).json({ message: "Não há nenhum telefone cadastrado na base de dados no momento." });
                 }
 
                 return res.status(200).json({ message: "Resultado dos dados de todos os telefones listados:", data: resultado });
 
             } else {
-                // 3. Busca Telefone Específico por ID Válido
-
-                // Note: A validação de ID foi simplificada/movida. Se chegou aqui, idTelefone é um número inteiro > 0.
-
+                // Bloco para buscar telefone por ID específico (ID válido)
                 const resultado = await telefoneModel.selecionarTelefoneId(idTelefone);
 
                 if (resultado.length === 0) {
-                    // Retorna 404 se o ID foi fornecido, mas não encontrou o recurso
                     return res.status(404).json({ message: "O ID em questão não possui telefone algum cadastrado." });
                 }
 
@@ -163,19 +220,21 @@ const telefoneController = {
 
         } catch (error) {
             console.error(error);
-            // Garante que o erro do servidor seja retornado com status 500
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
     buscarTelefoneCliente: async (req, res) => {
         try {
             const idClienteFK = Number(req.params.idClienteFK);
+
             if (!idClienteFK || idClienteFK <= 0 || isNaN(idClienteFK) || !Number.isInteger(idClienteFK)) {
-                res.status(400).json({ message: "Você deve inserir um número natural maior que zero para o campo de ID." });
+                return res.status(400).json({ message: "Você deve inserir um número inteiro positivo para o campo de ID do cliente." });
             }
+
             const resultado = await telefoneModel.selecionarTelefoneCliente(idClienteFK);
-            if (resultado.length === 0 || !resultado) {
-                return res.status(404).json({ message: "O ID em questão não possui cliente algum cadastrado." });
+
+            if (resultado.length === 0) { 
+                return res.status(404).json({ message: "O ID de cliente em questão não possui telefone(s) cadastrado(s)." });
             }
             return res.status(200).json({ message: "Resultado dos dados listados", data: resultado });
         } catch (error) {
@@ -186,17 +245,26 @@ const telefoneController = {
     adicionarTelefone: async (req, res) => {
         try {
             let { idClienteFK, tipoTelefone, numeroTelefone } = req.body;
+
+            // Validação idClienteFK
+            idClienteFK = Number(idClienteFK);
             if (!idClienteFK || idClienteFK <= 0 || isNaN(idClienteFK) || !Number.isInteger(idClienteFK)) {
-                res.status(400).json({ message: "Você deve inserir um número natural maior que zero para o campo de ID." });
+                return res.status(400).json({ message: "Você deve inserir um número inteiro positivo para o campo de ID do cliente." });
             }
-            tipoTelefone = removerAcentos(tipoTelefone.toLowerCase());
-            if (!tipoTelefone || tipoTelefone !== "fixo" || tipoTelefone !== "movel") {
-                res.status(400).json({ message: "Você deve inserir na região 'tipoTelefone' apenas os valores 'móvel' ou 'fixo'" });
+
+            // Validação tipoTelefone
+            tipoTelefone = removerAcentos(tipoTelefone ? tipoTelefone.toLowerCase() : '');
+            if (!tipoTelefone || (tipoTelefone !== "fixo" && tipoTelefone !== "movel")) {
+                return res.status(400).json({ message: "Você deve inserir na região 'tipoTelefone' apenas os valores 'móvel' ou 'fixo'." });
             }
-            if (!numeroTelefone || !(typeof numeroTelefone === 'string')) {
-                res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' apenas valores em 'string'." })
+
+            // Validação numeroTelefone
+            if (!numeroTelefone || typeof numeroTelefone !== 'string' || numeroTelefone.trim().length === 0) {
+                return res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' um valor em string não vazio." })
             }
-            const resultado = await telefoneModel.addTelefone(idClienteFK, numeroTelefone, tipoTelefone);
+
+            1
+            const resultado = await telefoneModel.addTelefone(idClienteFK, numeroTelefone.trim(), tipoTelefone);
             return res.status(200).json({ message: "Registro Incluído com Sucesso.", result: resultado });
 
         } catch (error) {
@@ -207,31 +275,33 @@ const telefoneController = {
     atualizarTelefone: async (req, res) => {
         try {
             const idTelefone = Number(req.params.idTelefone);
+            if (isNaN(idTelefone) || !Number.isInteger(idTelefone) || idTelefone <= 0) {
+                return res.status(400).json({ message: "Forneça um identificador (idTelefone) válido." });
+            }
+
             let { numeroTelefone, tipoTelefone } = req.body;
-            tipoTelefone = removerAcentos(tipoTelefone.toLowerCase());
-            if (!tipoTelefone || tipoTelefone !== "fixo" || tipoTelefone !== "movel") {
-                res.status(400).json({ message: "Você deve inserir na região 'tipoTelefone' apenas os valores 'móvel' ou 'fixo'" });
+
+            tipoTelefone = removerAcentos(tipoTelefone ? tipoTelefone.toLowerCase() : '');
+            if (!tipoTelefone || (tipoTelefone !== "fixo" && tipoTelefone !== "movel")) {
+                return res.status(400).json({ message: "Você deve inserir na região 'tipoTelefone' apenas os valores 'móvel' ou 'fixo'." });
             }
-            if (!numeroTelefone || !(typeof numeroTelefone === 'string')) {
-                res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' apenas valores em 'string'." })
+
+            // Validação numeroTelefone
+            if (!numeroTelefone || typeof numeroTelefone !== 'string' || numeroTelefone.trim().length === 0) {
+                return res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' um valor em string não vazio." })
             }
+
             const telefoneAtual = await telefoneModel.selecionarTelefoneId(idTelefone);
 
-            if (!clienteAtual || clienteAtual.length === 0) {
-                throw new Error('Registro não localizado.');
+            if (!telefoneAtual || telefoneAtual.length === 0) {
+                return res.status(404).json({ message: 'Registro de telefone não localizado.' });
             }
 
-            const novoNome = nomeCliente.trim() ?? clienteAtual[0].cpfCliente;
-            const novoCpf = cpfCliente.trim() ?? clienteAtual[0].nomeCliente;
+            const novoNumero = numeroTelefone.trim() ?? telefoneAtual[0].numeroTelefone;
+            const novoTipo = tipoTelefone || telefoneAtual[0].tipoTelefone; // tipoTelefone já foi processado/limpo
 
-            const consultaCpf = await clienteModel.selecionarPorCpfUpdate(cpfCliente, idCliente);
-
-            if (consultaCpf.length === 0) {
-                const resultado = await clienteModel.updateCliente(idCliente, novoCpf, novoNome);
-                return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
-            } else {
-                throw new Error('Ocorreu um erro ao incluir o registro. O CPF inserido  foi igual a um já cadastrado na base de dados.');
-            }
+            const resultado = await telefoneModel.updateTelefone(idTelefone, idClienteFK, novoNumero, novoTipo);
+            return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
 
         } catch (error) {
             console.error(error);
@@ -240,6 +310,207 @@ const telefoneController = {
     }
 }
 
-const enderecoController = {}
+const enderecoController = {
+    /**
+     * @route GET /enderecos
+     * @route GET /enderecos/:idEndereco
+     * @description Busca todos os endereços ou um endereço por ID.
+     */
+    buscarEnderecos: async (req, res) => {
+        try {
+            const idEndereco = Number(req.params.idEndereco);
+
+            // Bloco para buscar TODOS os endereços
+            if (!idEndereco || isNaN(idEndereco) || !Number.isInteger(idEndereco) || idEndereco <= 0) {
+                const resultado = await enderecoModel.selecionarEnderecoId(); // Chama sem ID
+
+                if (resultado.length === 0) {
+                    return res.status(200).json({ message: "Não há nenhum endereço cadastrado na base de dados." });
+                }
+                return res.status(200).json({ message: "Resultado de todos os endereços listados:", data: resultado });
+            }
+
+            // Bloco para buscar por ID específico
+            const resultado = await enderecoModel.selecionarEnderecoId(idEndereco);
+
+            if (resultado.length === 0) {
+                return res.status(404).json({ message: "O ID em questão não possui endereço algum cadastrado." });
+            }
+            return res.status(200).json({ message: "Resultado do endereço listado", data: resultado });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+        }
+    },
+
+    /**
+     * @route GET /clientes/:idClienteFK/enderecos
+     * @description Busca todos os endereços de um cliente específico.
+     */
+    buscarEnderecoPorCliente: async (req, res) => {
+        try {
+            const idClienteFK = Number(req.params.idClienteFK);
+
+            if (!idClienteFK || idClienteFK <= 0 || isNaN(idClienteFK) || !Number.isInteger(idClienteFK)) {
+                return res.status(400).json({ message: "Você deve inserir um ID de cliente (número inteiro positivo) válido." });
+            }
+
+            const resultado = await enderecoModel.selecionarEnderecoCliente(idClienteFK);
+
+            if (resultado.length === 0) {
+                return res.status(404).json({ message: "O ID de cliente em questão não possui endereço(s) cadastrado(s)." });
+            }
+            return res.status(200).json({ message: "Endereços do cliente listados", data: resultado });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+        }
+    },
+
+    /**
+     * @route POST /enderecos
+     * @description Adiciona um novo endereço a um cliente.
+     */
+    adicionarEndereco: async (req, res) => {
+        try {
+            let { idClienteFK, logradouro, numero, bairro, cidade, estado, cep, complemento } = req.body;
+
+            // 1. Validar o ID do Cliente
+            idClienteFK = Number(idClienteFK);
+            if (!idClienteFK || idClienteFK <= 0 || isNaN(idClienteFK) || !Number.isInteger(idClienteFK)) {
+                return res.status(400).json({ message: "Você deve inserir um 'idClienteFK' (número inteiro positivo) válido." });
+            }
+
+            // 2. Verificar se o Cliente existe (Evita erro de Foreign Key)
+            const cliente = await clienteModel.selecionarCliente(idClienteFK);
+            if (cliente.length === 0) {
+                return res.status(404).json({ message: "Não é possível adicionar endereço. O cliente (idClienteFK) não foi encontrado." });
+            }
+
+            // 3. Validar campos obrigatórios (strings)
+            if (!logradouro || typeof logradouro !== 'string' || logradouro.trim().length === 0 ||
+                !numero || typeof numero !== 'string' || numero.trim().length === 0 || // 'numero' como string é comum
+                !bairro || typeof bairro !== 'string' || bairro.trim().length === 0 ||
+                !cidade || typeof cidade !== 'string' || cidade.trim().length === 0 ||
+                !estado || typeof estado !== 'string' || estado.trim().length === 0 ||
+                !cep || typeof cep !== 'string' || cep.trim().length === 0) {
+                return res.status(400).json({ message: "Valores inválidos. Os campos 'logradouro', 'numero', 'bairro', 'cidade', 'estado' e 'cep' são obrigatórios." });
+            }
+
+            // 4. Limpar dados
+            const pLogradouro = logradouro.trim();
+            const pNumero = numero.trim();
+            const pBairro = bairro.trim();
+            const pCidade = cidade.trim();
+            const pEstado = estado.trim();
+            const pCep = cep.trim();
+            // Complemento é opcional
+            const pComplemento = complemento ? complemento.trim() : null;
+
+            // 5. Chamar o Model
+            const resultado = await enderecoModel.addEndereco(
+                idClienteFK, pLogradouro, pNumero, pBairro, pCidade, pEstado, pCep, pComplemento
+            );
+
+            return res.status(201).json({ message: "Endereço incluído com sucesso.", result: resultado });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+        }
+    },
+
+    /**
+     * @route PUT /enderecos/:idEndereco
+     * @description Atualiza um endereço por completo (método PUT).
+     */
+    atualizarEndereco: async (req, res) => {
+        try {
+            const idEndereco = Number(req.params.idEndereco);
+            if (isNaN(idEndereco) || !Number.isInteger(idEndereco) || idEndereco <= 0) {
+                return res.status(400).json({ message: "Forneça um identificador (idEndereco) válido." });
+            }
+
+            // 1. Busca o endereço atual
+            const enderecoAtualArr = await enderecoModel.selecionarEnderecoId(idEndereco);
+            if (!enderecoAtualArr || enderecoAtualArr.length === 0) {
+                return res.status(404).json({ message: 'Registro de endereço não localizado.' });
+            }
+            const enderecoAtual = enderecoAtualArr[0];
+
+            // 2. Lógica de Merge (igual fizemos no atualizarCliente)
+            const { logradouro, numero, bairro, cidade, estado, cep, complemento } = req.body;
+
+            const novoLogradouro = (logradouro !== undefined) ? logradouro.trim() : enderecoAtual.logradouro;
+            const novoNumero = (numero !== undefined) ? numero.trim() : enderecoAtual.numero;
+            const novoBairro = (bairro !== undefined) ? bairro.trim() : enderecoAtual.bairro;
+            const novoCidade = (cidade !== undefined) ? cidade.trim() : enderecoAtual.cidade;
+            const novoEstado = (estado !== undefined) ? estado.trim() : enderecoAtual.estado;
+            const novoCep = (cep !== undefined) ? cep.trim() : enderecoAtual.cep;
+            const novoComplemento = (complemento !== undefined) ? complemento.trim() : enderecoAtual.complemento;
+
+            // 3. Validação dos dados finais (após o merge)
+            if (!novoLogradouro || !novoNumero || !novoBairro || !novoCidade || !novoEstado || !novoCep) {
+                return res.status(400).json({ message: "Valores inválidos. Os campos 'logradouro', 'numero', 'bairro', 'cidade', 'estado' e 'cep' não podem ser nulos." });
+            }
+
+            // 4. Chamar o Model
+            const resultado = await enderecoModel.updateEndereco(
+                idEndereco,
+                enderecoAtual.idClienteFK, // idClienteFK (do objeto atual)
+                novoLogradouro,
+                novoNumero,
+                novoBairro,
+                novoCidade,
+                novoEstado,
+                novoCep,
+                novoComplemento
+            );
+
+            return res.status(200).json({ message: "Endereço atualizado com sucesso.", result: resultado });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+        }
+    },
+
+    /**
+     * @route DELETE /enderecos/:idEndereco
+     * @description Exclui um endereço.
+     */
+    excluirEndereco: async (req, res) => {
+        try {
+            const idEndereco = Number(req.params.idEndereco);
+            if (!idEndereco || idEndereco <= 0 || isNaN(idEndereco) || !Number.isInteger(idEndereco)) {
+                return res.status(400).json({ message: "Você deve inserir um ID de endereço (número inteiro positivo) válido." });
+            }
+
+            // 1. Verificar se o endereço existe
+            const enderecoAtual = await enderecoModel.selecionarEnderecoId(idEndereco);
+            if (enderecoAtual.length === 0) {
+                return res.status(404).json({ message: "O ID de endereço em questão não foi encontrado." });
+            }
+
+            // 2. Obter o idClienteFK (necessário para o delete no seu model)
+            const idClienteFK = enderecoAtual[0].idClienteFK;
+
+            // 3. Chamar o Model
+            const resultado = await enderecoModel.deletarEndereco(idEndereco, idClienteFK);
+
+            if (resultado && resultado.affectedRows === 1) {
+                res.status(200).json({ message: 'Endereço excluído com sucesso', data: resultado });
+            } else {
+                throw new Error("Não foi possível excluir o endereço (0 affectedRows).");
+            }
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+        }
+    }
+}
 
 module.exports = { clienteController, telefoneController, enderecoController };
