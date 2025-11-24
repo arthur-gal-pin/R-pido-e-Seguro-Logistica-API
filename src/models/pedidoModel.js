@@ -77,7 +77,6 @@ const pedidoModel = {
                 connection.release();
             }
         }
-
     },
     deletePedido: async (pedidoId) => {
         const sql = 'DELETE FROM pedidos WHERE idPedido = ?;';
