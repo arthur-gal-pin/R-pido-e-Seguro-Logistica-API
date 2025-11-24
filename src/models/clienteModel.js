@@ -29,12 +29,14 @@ const clienteModel = {
             const sqlClientes = 'INSERT INTO clientes (nomeCliente, sobrenomeCliente, cpfCliente, emailCliente) VALUES (?,?,?,?);';
             const valuesCliente = [nomeCliente, sobrenomeCliente, cpfCliente, emailCliente];
             const [rowsCliente] = await connection.query(sqlClientes, valuesCliente);
+
             //Segunda etapa: adicionar as informações do telfone do cliente na tabela de telefones.
             const sqlTelefone = 'INSERT INTO telefones (idClienteFK, numero, tipoTelefone) VALUES (?,?,?);';
             const valuesTelefone = [rowsCliente.insertId, numeroTelefoneCliente, tipoTelefone]
             const [rowsTelefone] = await connection.query(sqlTelefone, valuesTelefone);
+
             //Terceira etapa: adicionar as informações do endereço do cliente na tabela de endereços.
-            const sqlEndereco = 'INSERT INTO enderecos (idClienteFK, logradouro, numero, bairro, cidade, estado, cep, complemento) VALUES(?,?,?,?,?,?,?,?); ';
+            const sqlEndereco = 'INSERT INTO endereco (idClienteFK, logradouro, numero, bairro, cidade, estado, cep, complemento) VALUES(?,?,?,?,?,?,?,?);';
             const valuesEndereco = [rowsCliente.insertId, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento];
             const [rowsEndereco] = await connection.query(sqlEndereco, valuesEndereco);
             connection.commit();

@@ -4,7 +4,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: '1234',
-    database: 'lojadb',
+    database: 'entregasdb',
     port: 3308,
     waitForConnections: true,
     connectionLimit: 10,

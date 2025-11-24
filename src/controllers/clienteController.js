@@ -99,13 +99,23 @@ const clienteController = {
                 return res.status(409).json({ message: 'Ocorreu um erro. O CPF inserido já está cadastrado.' });
             }
 
+            console.log();
+
             // --- Chamada da Transação ---
             const resultado = await clienteModel.addCliente(
-                cpfCliente, nomeCliente.trim(), sobrenomeCliente.trim(), emailCliente.trim(),
-                numeroTelefoneCliente.trim(), tipoTelefone,
-                logradouroCliente.trim(), numeroEnderecoCliente.trim(), bairro.trim(),
-                cidade.trim(), estado.trim(), cep.trim(),
-                complemento ? complemento.trim() : null
+                cpfCliente, 
+                nomeCliente.trim(), 
+                sobrenomeCliente, 
+                emailCliente.trim(),
+                numeroTelefoneCliente.trim(), 
+                tipoTelefone,
+                logradouroCliente, 
+                numeroEnderecoCliente, 
+                bairro,
+                cidade, 
+                estado, 
+                cep,
+                complemento ? complemento : null
             );
 
             return res.status(201).json({ message: "Cliente, Telefone e Endereço incluídos com sucesso via transação.", data: resultado });
@@ -302,6 +312,29 @@ const telefoneController = {
 
             const resultado = await telefoneModel.updateTelefone(idTelefone, idClienteFK, novoNumero, novoTipo);
             return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+        }
+    },
+    deletarTelefone: async (req, res) => {
+        try {
+            const idTelefone = Number(req.params.idTelefone);
+            if (isNaN(idTelefone) || Number.isInteger(idTelefone) || idTelefone <= 0) {
+                return res.status(400).json({message: 'Por favor, forneça um ID válido'});
+            }
+            const idTelefoneSelecionado = await telefoneModel.deletarTelefone(idTelefone);
+            if (idTelefoneSelecionado.length === 0) {
+                throw new Error('O telefone não foi localizado');
+            } else {
+                const resultado = await telefoneModel.deletarTelefone(idTelefone);
+                if (resultado.affectedRows == 1) {
+                    res.status(200).json({ message: 'Registro do telefone excluído com sucesso', data: resultado });
+                } else {
+                    throw new Error('Não foi possível excluir o produto');
+                }
+            }
 
         } catch (error) {
             console.error(error);

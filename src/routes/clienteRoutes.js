@@ -1,5 +1,7 @@
 const express = require('express');
 const clienteRoutes = express.Router();
+const telefoneRoutes = express.Router();
+const enderecoRoutes = express.Router();
 
 const { clienteController } = require('../controllers/clienteController');
 
