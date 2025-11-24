@@ -65,10 +65,13 @@ const clienteModel = {
         return rows;
     },
     deleteCliente: async (idCliente) => {
-        const sql = 'DELETE FROM clientes WHERE idCliente = ?;';
-        const [rows] = await pool.query(sql, [idCliente]);
-        console.log(rows);
-        return rows;
+        const sqlEndereco = 'DELETE FROM endereco WHERE idClienteFK = ?;';
+        const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
+        const sqlClientes = 'DELETE FROM clientes WHERE idCliente = ?;';
+        const [rowsEndereco] = await pool.query(sqlEndereco, [idCliente]);
+        const [rowsTelefone] = await pool.query(sqlTelefone, [idCliente]);
+        const [rowsClientes] = await pool.query(sqlClientes, [idCliente]);
+        return {rowsClientes, rowsEndereco, rowsTelefone};
     }
 }
 const telefoneModel = {

@@ -13,11 +13,11 @@ clienteRoutes.delete('/clientes/:idCliente', clienteController.excluirCliente);
 
 const { telefoneController } = require('../controllers/clienteController');
 
-telefoneRoutes.post('/telefones', telefoneController.adicionarTelefone);
-telefoneRoutes.get('/telefones/:idClienteFK', telefoneController.buscarTelefoneCliente);
-telefoneRoutes.get('/telefones/:idTelefone', telefoneController.buscarTelefoneId);
-telefoneRoutes.put('/telefones/:idTelefone', telefoneController.atualizarTelefone);
-telefoneRoutes.delete('telefones/:idTelefone', telefoneController.deletarTelefone);
+clienteRoutes.post('/telefones', telefoneController.adicionarTelefone);
+clienteRoutes.get('/telefones/:idClienteFK', telefoneController.buscarTelefoneCliente);
+clienteRoutes.get('/telefones', telefoneController.buscarTelefoneId);
+clienteRoutes.put('/telefones/:idTelefone', telefoneController.atualizarTelefone);
+clienteRoutes.delete('telefones/:idTelefone', telefoneController.deletarTelefone);
 
 const { enderecoController } = require('../controllers/clienteController');
 

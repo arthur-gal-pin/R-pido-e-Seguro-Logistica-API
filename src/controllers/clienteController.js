@@ -143,12 +143,12 @@ const clienteController = {
             // Pré-processamento e validação básica dos campos
             cpfCliente = cpfCliente ? cpfCliente.replace(/\./g, "").replace(/-/g, "").trim() : '';
 
-            if (!cpfCliente || cpfCliente.length !== 11 ||
-                typeof nomeCliente !== 'string' || nomeCliente.length < 3 ||
-                typeof sobrenomeCliente !== 'string' || sobrenomeCliente.length < 3 ||
-                typeof emailCliente !== 'string' || emailCliente.length < 10) {
-                return res.status(400).json({ message: "Valores para registro inválidos (CPF, Nome, Sobrenome ou E-mail incorretos/ausentes)." });
-            }
+            // if (!cpfCliente || cpfCliente.length !== 11 ||
+            //     typeof nomeCliente !== 'string' || nomeCliente.length < 3 ||
+            //     typeof sobrenomeCliente !== 'string' || sobrenomeCliente.length < 3 ||
+            //     typeof emailCliente !== 'string' || emailCliente.length < 10) {
+            //     return res.status(400).json({ message: "Valores para registro inválidos (CPF, Nome, Sobrenome ou E-mail incorretos/ausentes)." });
+            // }
 
 
 
@@ -187,6 +187,7 @@ const clienteController = {
 
             const resultado = await clienteModel.deleteCliente(id);
 
+            // Arrumar a verificação de erro, pois a exclusão do cliente deu certo
             if (resultado && resultado.affectedRows === 1) {
                 res.status(200).json({ message: 'Cliente excluído com sucesso', data: resultado });
             } else {
@@ -204,7 +205,7 @@ const clienteController = {
 const telefoneController = {
     buscarTelefoneId: async (req, res) => {
         try {
-            const idTelefone = Number(req.params.idTelefone);
+            const idTelefone = Number(req.query.id);
 
             // Bloco para buscar todos os telefones (ID não fornecido ou inválido)
             if (!idTelefone || idTelefone <= 0 || isNaN(idTelefone) || !Number.isInteger(idTelefone)) {
@@ -268,7 +269,8 @@ const telefoneController = {
                 return res.status(400).json({ message: "Você deve inserir na região 'tipoTelefone' apenas os valores 'móvel' ou 'fixo'." });
             }
 
-            // Validação numeroTelefone
+            // Validação numeroTelefone 
+            // Validar tamanho do telefone
             if (!numeroTelefone || typeof numeroTelefone !== 'string' || numeroTelefone.trim().length === 0) {
                 return res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' um valor em string não vazio." })
             }
