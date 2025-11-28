@@ -7,7 +7,7 @@ const { clienteController } = require('../controllers/clienteController');
 
 clienteRoutes.post('/clientes', clienteController.adicionarCliente);
 clienteRoutes.get('/clientes', clienteController.buscarClientes);
-clienteRoutes.get('/clientes/:cpfParam', clienteController.buscarClientePorCpf);
+clienteRoutes.get('/clientes/:cpfCliente', clienteController.buscarClientePorCpf);
 clienteRoutes.put('/clientes/:idCliente', clienteController.atualizarCliente);
 clienteRoutes.delete('/clientes/:idCliente', clienteController.excluirCliente);
 
@@ -17,14 +17,15 @@ clienteRoutes.post('/telefones', telefoneController.adicionarTelefone);
 clienteRoutes.get('/telefones/:idClienteFK', telefoneController.buscarTelefoneCliente);
 clienteRoutes.get('/telefones', telefoneController.buscarTelefoneId);
 clienteRoutes.put('/telefones/:idTelefone', telefoneController.atualizarTelefone);
-clienteRoutes.delete('telefones/:idTelefone', telefoneController.deletarTelefone);
+clienteRoutes.delete('/telefones/:idTelefone', telefoneController.deletarTelefone);
 
 const { enderecoController } = require('../controllers/clienteController');
 
-enderecoRoutes.post('/endereco', enderecoController.adicionarEndereco);
-enderecoRoutes.get('/enderdeco', enderecoController.buscarEnderecos);
-enderecoRoutes.get('/enderdeco/:idEndereco', enderecoController.buscarEnderecoPorCliente);
-enderecoRoutes.put('/endereco/:idClienteFK', enderecoController.atualizarEndereco);
-enderecoRoutes.delete('endereco/:idEndereco', enderecoController.excluirEndereco);
+clienteRoutes.get('/enderecos', enderecoController.buscarEnderecos);
+clienteRoutes.get('/enderecos/:idClienteFK', enderecoController.buscarEnderecoPorCliente); 
+clienteRoutes.post('/enderecos', enderecoController.adicionarEndereco);
+clienteRoutes.put('/enderecos/:idEndereco', enderecoController.atualizarEndereco); 
+clienteRoutes.delete('/enderecos/:idEndereco', enderecoController.excluirEndereco);
 
-module.exports = { clienteRoutes, telefoneController, enderecoController }
+
+module.exports = { clienteRoutes, telefoneRoutes, enderecoRoutes }

@@ -38,8 +38,9 @@ const clienteController = {
     },
     buscarClientePorCpf: async (req, res) => {
         try {
-            const cpfParam = req.params.cpfCliente || '';
-            const cpf = cpfParam.replace(/\./g, "").replace(/-/g, "").trim();
+            const cpfParam = req.params.cpfCliente;
+            console.log(cpfParam);
+            const cpf = (cpfParam || "").replace(/\./g, "").replace(/-/g, "").trim();
 
             if (!cpf || cpf.length !== 11) {
                 return res.status(400).json({ message: "Forneça um identificador (CPF) válido (11 dígitos, apenas números)." });
@@ -83,6 +84,7 @@ const clienteController = {
                 return res.status(400).json({ message: "Número de telefone é obrigatório." });
             }
             tipoTelefone = tipoTelefone ? tipoTelefone.toLowerCase().trim() : '';
+            tipoTelefone = removerAcentos(tipoTelefone);
             if (tipoTelefone !== 'fixo' && tipoTelefone !== 'movel') {
                 return res.status(400).json({ message: "Tipo de telefone deve ser 'fixo' ou 'movel'." });
             }
@@ -90,6 +92,8 @@ const clienteController = {
             // --- Validação do Endereço ---
             if (!logradouroCliente || !numeroEnderecoCliente || !bairro || !cidade || !estado || !cep) {
                 return res.status(400).json({ message: "Dados de endereço incompletos (logradouro, numero, bairro, cidade, estado, cep são obrigatórios)." });
+            } else if (cep.length != 8) {
+                return res.status(400).json({ message: "O CEP deve conter exatamente 8 dígitos." })
             }
 
             // --- Checagem de Duplicidade ---
@@ -103,17 +107,17 @@ const clienteController = {
 
             // --- Chamada da Transação ---
             const resultado = await clienteModel.addCliente(
-                cpfCliente, 
-                nomeCliente.trim(), 
-                sobrenomeCliente, 
+                cpfCliente,
+                nomeCliente.trim(),
+                sobrenomeCliente,
                 emailCliente.trim(),
-                numeroTelefoneCliente.trim(), 
+                numeroTelefoneCliente.trim(),
                 tipoTelefone,
-                logradouroCliente, 
-                numeroEnderecoCliente, 
+                logradouroCliente,
+                numeroEnderecoCliente,
                 bairro,
-                cidade, 
-                estado, 
+                cidade,
+                estado,
                 cep,
                 complemento ? complemento : null
             );
@@ -132,39 +136,38 @@ const clienteController = {
                 return res.status(400).json({ message: "Forneça um identificador (idCliente) válido." });
             }
 
-            const clienteAtual = await clienteModel.selecionarCliente(idCliente);
-
-            if (!clienteAtual || clienteAtual.length === 0) {
+            // 1. BUSCAR o cliente atual PRIMEIRO
+            const clienteAtualArr = await clienteModel.selecionarCliente(idCliente);
+            if (!clienteAtualArr || clienteAtualArr.length === 0) {
                 return res.status(404).json({ message: 'Registro não localizado para o ID fornecido.' });
             }
+            const clienteAtual = clienteAtualArr[0];
 
-            let { nomeCliente, cpfCliente, sobrenomeCliente, emailCliente } = req.body;
+            // 2. Pegar os dados do body
+            const { nomeCliente, cpfCliente, sobrenomeCliente, emailCliente } = req.body;
 
-            // Pré-processamento e validação básica dos campos
-            cpfCliente = cpfCliente ? cpfCliente.replace(/\./g, "").replace(/-/g, "").trim() : '';
+            // 3. Fazer o MERGE (usando o valor do body SE existir, senão o valor atual)
+            //    (Usando (var !== undefined) para mais segurança com .trim())
+            const novoNome = (nomeCliente !== undefined) ? nomeCliente.trim() : clienteAtual.nomeCliente;
+            const novoSobrenome = (sobrenomeCliente !== undefined) ? sobrenomeCliente.trim() : clienteAtual.sobrenomeCliente;
+            const novoEmail = (emailCliente !== undefined) ? emailCliente.trim() : clienteAtual.emailCliente;
+            const novoCpf = (cpfCliente !== undefined) ? cpfCliente.replace(/\./g, "").replace(/-/g, "").trim() : clienteAtual.cpfCliente;
 
-            // if (!cpfCliente || cpfCliente.length !== 11 ||
-            //     typeof nomeCliente !== 'string' || nomeCliente.length < 3 ||
-            //     typeof sobrenomeCliente !== 'string' || sobrenomeCliente.length < 3 ||
-            //     typeof emailCliente !== 'string' || emailCliente.length < 10) {
-            //     return res.status(400).json({ message: "Valores para registro inválidos (CPF, Nome, Sobrenome ou E-mail incorretos/ausentes)." });
-            // }
+            if (!novoCpf || novoCpf.length !== 11 ||
+                typeof novoNome !== 'string' || novoNome.length < 3 ||
+                typeof novoSobrenome !== 'string' || novoSobrenome.length < 3 ||
+                typeof novoEmail !== 'string' || novoEmail.length < 10) {
+                return res.status(400).json({ message: "Valores para registro inválidos (CPF, Nome, Sobrenome ou E-mail incorretos)." });
+            }
 
-
-
-            const novoNome = nomeCliente.trim() ?? clienteAtual[0].nomeCliente;
-            const novoSobrenome = sobrenomeCliente.trim() ?? clienteAtual[0].sobrenomeCliente;
-            const novoEmail = emailCliente.trim() ?? clienteAtual[0].emailCliente;
-            const novoCpf = cpfCliente || clienteAtual[0].cpfCliente;
-
-            // Verifica se o CPF limpo já existe para outro cliente (diferente do id sendo atualizado)
+            // 5. Verificar duplicidade de CPF
             const consultaCpf = await clienteModel.selecionarPorCpfUpdate(novoCpf, idCliente);
 
             if (consultaCpf.length === 0) {
-                const resultado = await clienteModel.updateCliente(idCliente, novoNome, novoCpf, novoSobrenome, novoEmail);
+                const resultado = await clienteModel.updateCliente(idCliente, novoCpf, novoNome, novoSobrenome, novoEmail);
                 return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
             } else {
-                return res.status(409).json({ message: 'Ocorreu um erro ao atualizar o registro. O CPF inserido foi igual a um já cadastrado para outro cliente.' });
+                return res.status(409).json({ message: 'Ocorreu um erro. O CPF inserido já pertence a outro cliente.' });
             }
 
         } catch (error) {
@@ -186,9 +189,9 @@ const clienteController = {
             }
 
             const resultado = await clienteModel.deleteCliente(id);
+            console.log(resultado);
 
-            // Arrumar a verificação de erro, pois a exclusão do cliente deu certo
-            if (resultado && resultado.affectedRows === 1) {
+            if (resultado && resultado.rowsClientes.affectedRows === 1) {
                 res.status(200).json({ message: 'Cliente excluído com sucesso', data: resultado });
             } else {
                 // Lança um erro se a exclusão falhar no Model
@@ -244,7 +247,7 @@ const telefoneController = {
 
             const resultado = await telefoneModel.selecionarTelefoneCliente(idClienteFK);
 
-            if (resultado.length === 0) { 
+            if (resultado.length === 0) {
                 return res.status(404).json({ message: "O ID de cliente em questão não possui telefone(s) cadastrado(s)." });
             }
             return res.status(200).json({ message: "Resultado dos dados listados", data: resultado });
@@ -263,6 +266,11 @@ const telefoneController = {
                 return res.status(400).json({ message: "Você deve inserir um número inteiro positivo para o campo de ID do cliente." });
             }
 
+            consultaCliente = await telefoneModel.selecionarTelefoneCliente(idClienteFK);
+            if (consultaCliente.length === 0) {
+                return res.status(404).json({ message: "Não foi encontrado nenhum cliente com esse ID no banco de dados." })
+            }
+
             // Validação tipoTelefone
             tipoTelefone = removerAcentos(tipoTelefone ? tipoTelefone.toLowerCase() : '');
             if (!tipoTelefone || (tipoTelefone !== "fixo" && tipoTelefone !== "movel")) {
@@ -275,7 +283,6 @@ const telefoneController = {
                 return res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' um valor em string não vazio." })
             }
 
-            1
             const resultado = await telefoneModel.addTelefone(idClienteFK, numeroTelefone.trim(), tipoTelefone);
             return res.status(200).json({ message: "Registro Incluído com Sucesso.", result: resultado });
 
@@ -286,33 +293,48 @@ const telefoneController = {
     },
     atualizarTelefone: async (req, res) => {
         try {
+            // 1. FETCH & Validação do ID 
             const idTelefone = Number(req.params.idTelefone);
             if (isNaN(idTelefone) || !Number.isInteger(idTelefone) || idTelefone <= 0) {
-                return res.status(400).json({ message: "Forneça um identificador (idTelefone) válido." });
+                return res.status(400).json({ message: "Forneça um identificador (idTelefone) válido na rota." });
             }
 
-            let { numeroTelefone, tipoTelefone } = req.body;
+            const telefoneAtualArr = await telefoneModel.selecionarTelefoneId(idTelefone);
 
-            tipoTelefone = removerAcentos(tipoTelefone ? tipoTelefone.toLowerCase() : '');
-            if (!tipoTelefone || (tipoTelefone !== "fixo" && tipoTelefone !== "movel")) {
-                return res.status(400).json({ message: "Você deve inserir na região 'tipoTelefone' apenas os valores 'móvel' ou 'fixo'." });
-            }
-
-            // Validação numeroTelefone
-            if (!numeroTelefone || typeof numeroTelefone !== 'string' || numeroTelefone.trim().length === 0) {
-                return res.status(400).json({ message: "Você deve inserir na região 'numeroTelefone' um valor em string não vazio." })
-            }
-
-            const telefoneAtual = await telefoneModel.selecionarTelefoneId(idTelefone);
-
-            if (!telefoneAtual || telefoneAtual.length === 0) {
+            if (!telefoneAtualArr || telefoneAtualArr.length === 0) {
                 return res.status(404).json({ message: 'Registro de telefone não localizado.' });
             }
 
-            const novoNumero = numeroTelefone.trim() ?? telefoneAtual[0].numeroTelefone;
-            const novoTipo = tipoTelefone || telefoneAtual[0].tipoTelefone; // tipoTelefone já foi processado/limpo
+            // Desestrutura o objeto atual para facilitar o acesso (CORREÇÃO 2)
+            const telefoneAtual = telefoneAtualArr[0];
 
-            const resultado = await telefoneModel.updateTelefone(idTelefone, idClienteFK, novoNumero, novoTipo);
+            // 2. MERGE (Fusão dos dados)
+            let { numeroTelefone, tipoTelefone } = req.body;
+
+            // Limpeza dos dados de entrada
+            const tipoRecebido = (tipoTelefone !== undefined) ? tipoTelefone.trim().toLowerCase() : undefined;
+
+            // Os IDs (PK e FK) são mantidos, apenas os dados do corpo são atualizados.
+            const idClienteFK = telefoneAtual.idClienteFK; // Obtendo a FK do registro atual
+
+            const novoNumero = (numeroTelefone !== undefined) ? numeroTelefone : telefoneAtual.numeroTelefone;
+            const novoTipoTelefone = (tipoRecebido !== undefined) ? tipoRecebido : telefoneAtual.tipoTelefone;
+
+            // 3. VALIDAÇÃO Pós-Merge (CORREÇÃO 3)
+            const tiposValidos = ['fixo', 'movel'];
+
+            if (!novoNumero || novoNumero.length < 8 || novoNumero.length > 20) {
+                return res.status(400).json({ message: "Número de telefone inválido ou ausente." });
+            }
+
+            if (!tiposValidos.includes(novoTipoTelefone)) {
+                return res.status(400).json({ message: `Tipo de telefone inválido: '${novoTipoTelefone}'. Use 'fixo' ou 'movel'.` });
+            }
+
+            // 4. UPDATE
+            // Atenção: A função updateTelefone deve ter a assinatura correta: (idTelefone, idClienteFK, numeroTelefone, tipoTelefone)
+            const resultado = await telefoneModel.updateTelefone(idTelefone, idClienteFK, novoNumero, novoTipoTelefone);
+
             return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
 
         } catch (error) {
@@ -323,21 +345,21 @@ const telefoneController = {
     deletarTelefone: async (req, res) => {
         try {
             const idTelefone = Number(req.params.idTelefone);
-            if (isNaN(idTelefone) || Number.isInteger(idTelefone) || idTelefone <= 0) {
-                return res.status(400).json({message: 'Por favor, forneça um ID válido'});
+
+            if (isNaN(idTelefone) || !Number.isInteger(idTelefone) || idTelefone <= 0) {
+                return res.status(400).json({ message: 'Por favor, forneça um ID válido' });
             }
-            const idTelefoneSelecionado = await telefoneModel.deletarTelefone(idTelefone);
-            if (idTelefoneSelecionado.length === 0) {
+            const idTelefoneSelecionado = await telefoneModel.selecionarTelefoneId(idTelefone);
+            if (!idTelefone || idTelefoneSelecionado.length === 0) {
                 throw new Error('O telefone não foi localizado');
             } else {
                 const resultado = await telefoneModel.deletarTelefone(idTelefone);
-                if (resultado.affectedRows == 1) {
+                if (resultado && resultado.affectedRows > 0) {
                     res.status(200).json({ message: 'Registro do telefone excluído com sucesso', data: resultado });
                 } else {
                     throw new Error('Não foi possível excluir o produto');
                 }
             }
-
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
@@ -353,7 +375,7 @@ const enderecoController = {
      */
     buscarEnderecos: async (req, res) => {
         try {
-            const idEndereco = Number(req.params.idEndereco);
+            const idEndereco = Number(req.query.id);
 
             // Bloco para buscar TODOS os endereços
             if (!idEndereco || isNaN(idEndereco) || !Number.isInteger(idEndereco) || idEndereco <= 0) {
@@ -430,7 +452,7 @@ const enderecoController = {
                 !bairro || typeof bairro !== 'string' || bairro.trim().length === 0 ||
                 !cidade || typeof cidade !== 'string' || cidade.trim().length === 0 ||
                 !estado || typeof estado !== 'string' || estado.trim().length === 0 ||
-                !cep || typeof cep !== 'string' || cep.trim().length === 0) {
+                !cep || typeof cep !== 'string' || cep.trim().length === 0 || cep.trim().length != 8) {
                 return res.status(400).json({ message: "Valores inválidos. Os campos 'logradouro', 'numero', 'bairro', 'cidade', 'estado' e 'cep' são obrigatórios." });
             }
 

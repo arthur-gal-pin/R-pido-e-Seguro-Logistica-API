@@ -5,6 +5,7 @@ USE entregasdb;
 CREATE TABLE IF NOT EXISTS Clientes (
     idCliente INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nomeCliente VARCHAR(50) NOT NULL,
+    sobrenomeCliente VARCHAR(200) NOT NULL,
     cpfCliente CHAR(11) NOT NULL UNIQUE,
     emailCliente VARCHAR(200) NOT NULL UNIQUE
 );

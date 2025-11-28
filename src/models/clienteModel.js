@@ -36,7 +36,7 @@ const clienteModel = {
             const [rowsTelefone] = await connection.query(sqlTelefone, valuesTelefone);
 
             //Terceira etapa: adicionar as informações do endereço do cliente na tabela de endereços.
-            const sqlEndereco = 'INSERT INTO endereco (idClienteFK, logradouro, numero, bairro, cidade, estado, cep, complemento) VALUES(?,?,?,?,?,?,?,?);';
+            const sqlEndereco = 'INSERT INTO enderecos (idClienteFK, logradouro, numero, bairro, cidade, estado, cep, complemento) VALUES(?,?,?,?,?,?,?,?);';
             const valuesEndereco = [rowsCliente.insertId, logradouroCliente, numeroEnderecoCliente, bairro, cidade, estado, cep, complemento];
             const [rowsEndereco] = await connection.query(sqlEndereco, valuesEndereco);
             connection.commit();
@@ -61,19 +61,31 @@ const clienteModel = {
         const sql = 'UPDATE clientes SET nomeCliente = ?, cpfCliente = ?, sobrenomeCliente = ?, emailCliente = ? WHERE idCliente = ?;';
         const values = [nomeCliente, cpfCliente, sobrenomeCliente, emailCliente, idCliente];
         const [rows] = await pool.query(sql, values);
-        console.log(rows);
         return rows;
     },
     deleteCliente: async (idCliente) => {
-        const sqlEndereco = 'DELETE FROM endereco WHERE idClienteFK = ?;';
-        const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
-        const sqlClientes = 'DELETE FROM clientes WHERE idCliente = ?;';
-        const [rowsEndereco] = await pool.query(sqlEndereco, [idCliente]);
-        const [rowsTelefone] = await pool.query(sqlTelefone, [idCliente]);
-        const [rowsClientes] = await pool.query(sqlClientes, [idCliente]);
-        return {rowsClientes, rowsEndereco, rowsTelefone};
+        const connection = await pool.getConnection();
+
+        try {
+            const sqlEndereco = 'DELETE FROM enderecos WHERE idClienteFK = ?;';
+            const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
+            const sqlClientes = 'DELETE FROM clientes WHERE idCliente = ?;';
+            const [rowsEndereco] = await connection.query(sqlEndereco, [idCliente]);
+            const [rowsTelefone] = await connection.query(sqlTelefone, [idCliente]);
+            const [rowsClientes] = await connection.query(sqlClientes, [idCliente]);
+            return { rowsClientes, rowsEndereco, rowsTelefone };
+        } catch (error) {
+            connection.rollback();
+            throw error;
+        } finally {
+            //Sempre liberar a conexão, com erro ou sem
+            if (connection) {
+                connection.release();
+            }
+        }
     }
 }
+
 const telefoneModel = {
     selecionarTelefoneId: async (idTelefone) => {
         const sql = idTelefone ? 'SELECT * FROM telefones WHERE idTelefone=?;' : 'SELECT * FROM telefones;';
@@ -99,9 +111,9 @@ const telefoneModel = {
         const [rows] = await pool.query(sql, values);
         return rows;
     },
-    deletarTelefone: async (idTelefone, idClienteFK) => {
-        const sql = 'DELETE FROM telefones WHERE idTelefone = ? AND idClienteFK = ?;';
-        const values = [idTelefone, idClienteFK];
+    deletarTelefone: async (idTelefone) => {
+        const sql = 'DELETE FROM telefones WHERE idTelefone = ?;';
+        const values = [idTelefone];
         const [rows] = await pool.query(sql, values);;
         console.log(rows);
         return rows;
