@@ -1,14 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-//Referência ao arquivo de rotas
-const {produtoRoutes} = require('./produtoRoutes');
-const {clienteRoutes} = require('./clienteRoutes');
-const {pedidoRoutes} = require('./pedidoRoutes');
+const entregaRoutes = require('./entregaRoutes');
+const clienteRoutes = require('./clienteRoutes');
+const pedidoRoutes = require('./pedidoRoutes');
 
+// Usa cada Router importado
+router.use('/entregas', entregaRoutes);
+router.use('/clientes', clienteRoutes);
+router.use('/pedidos', pedidoRoutes);
 
-router.use('/', produtoRoutes);
-router.use('/', clienteRoutes);
-router.use('/', pedidoRoutes);
-
-module.exports = {router};
+module.exports = router; // Exporta direto o Router

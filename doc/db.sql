@@ -5,6 +5,7 @@ USE entregasdb;
 CREATE TABLE IF NOT EXISTS Clientes (
     idCliente INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     nomeCliente VARCHAR(50) NOT NULL,
+    sobrenomeCliente VARCHAR(200) NOT NULL,
     cpfCliente CHAR(11) NOT NULL UNIQUE,
     emailCliente VARCHAR(200) NOT NULL UNIQUE
 );
@@ -34,7 +35,7 @@ CREATE TABLE IF NOT EXISTS Pedidos (
     idPedido INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     idCliente INT NOT NULL,
 	dataPedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
-    urgente BOOLEAN NOT NULL,
+    urgencia ENUM('urgente', 'nao urgente') NOT NULL,
     distanciaKM DECIMAL(6,2) NOT NULL,
     pesoCargaKG DECIMAL(5,2) NOT NULL,
     valorKM DECIMAL(5,2) NOT NULL,
