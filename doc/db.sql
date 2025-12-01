@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS Pedidos (
     idPedido INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     idCliente INT NOT NULL,
 	dataPedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
-    urgente BOOLEAN NOT NULL,
+    urgencia ENUM('urgente', 'nao urgente') NOT NULL,
     distanciaKM DECIMAL(6,2) NOT NULL,
     pesoCargaKG DECIMAL(5,2) NOT NULL,
     valorKM DECIMAL(5,2) NOT NULL,
