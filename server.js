@@ -1,13 +1,11 @@
 const express = require('express');
 const app = express();
-const {router} = require('./src/routes/routes');
-const PORT = 8081
+const routes = require('./src/routes/routes'); // Importa o Router correto
+const PORT = 8081;
 
 app.use(express.json());
+app.use('/', routes);
 
-app.use('/', router);
-
-app.listen(PORT, ()=>{
+app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
-})
-
+});
