@@ -186,33 +186,33 @@ const clienteModel = {
             }
         }
     },
-     /**
-     * @function selecionarNomeCliente
-     * @async
-     * @description Seleciona o cliente pelo nome
-     * @param {Number} nomeCliente 
-     * @returns {Promise<Array<Object>>} Retorna o conteúdo dos dados da requisição
-     * @example
-     * const resultado = await clienteModel.selecionarNomeCliente(Fulano);
-    *  // Saída esperada
-    * 
-    * {message: "Resultado dos dados listados",
-       * "idCliente": 1
-       * "nomeCliente": 'Fulano',
-       * "sobrenomeCliente:" 'Da Silva',
-       * "emailCliente": 'fulano@teste.com', 
-       * "cpfCliente": '12345678900', 
-       * "numero": '(19)9999-99999',
-       * "tipoTelefone": 'movel',
-       * "logradouro": 'Av. Teste',
-       * "numero": '000',
-       * "bairro": 'Algum lugar',
-       * "cidade": 'Um canto',
-       * "estado": 'Teste',
-       * "cep": '00999-999',
-       * "complemento": 'Bloco x'
-       * }
-     */
+    /**
+    * @function selecionarNomeCliente
+    * @async
+    * @description Seleciona o cliente pelo nome
+    * @param {Number} nomeCliente 
+    * @returns {Promise<Array<Object>>} Retorna o conteúdo dos dados da requisição
+    * @example
+    * const resultado = await clienteModel.selecionarNomeCliente(Fulano);
+   *  // Saída esperada
+   * 
+   * {message: "Resultado dos dados listados",
+      * "idCliente": 1
+      * "nomeCliente": 'Fulano',
+      * "sobrenomeCliente:" 'Da Silva',
+      * "emailCliente": 'fulano@teste.com', 
+      * "cpfCliente": '12345678900', 
+      * "numero": '(19)9999-99999',
+      * "tipoTelefone": 'movel',
+      * "logradouro": 'Av. Teste',
+      * "numero": '000',
+      * "bairro": 'Algum lugar',
+      * "cidade": 'Um canto',
+      * "estado": 'Teste',
+      * "cep": '00999-999',
+      * "complemento": 'Bloco x'
+      * }
+    */
     selecionarNomeCliente: async (nomeCliente) => {
         const sql = `SELECT * FROM clientes WHERE nomeCliente LIKE ?;`;
         const values = [`%${nomeCliente}%`]
@@ -273,13 +273,22 @@ const clienteModel = {
         const connection = await pool.getConnection();
 
         try {
+            await connection.beginTransaction();
+
             const sqlEndereco = 'DELETE FROM enderecos WHERE idClienteFK = ?;';
             const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
             const sqlClientes = 'DELETE FROM clientes WHERE idCliente = ?;';
+            const sqlPedidos = 'DELETE FROM pedidos WHERE idCliente = ?;';
+            const sqlEntregas = 'DELETE FROM entregas WHERE idPedido = IN (?);';
+            const sqlSelectEntrega = 'SELECT idPedido FROM pedidos WHERE idCliente = ?';
+            const [rowsSelectEntrega] = await connection.query(sqlSelectEntrega, [idCliente]);
+            const idPedido = rowsSelectEntrega.map(row => row.idPedido);
+            const [rowsEntrega] = await connection.query(sqlEntregas, [idPedido]);
+            const [rowsPedido] = await connection.query(sqlPedidos, [idCliente])
             const [rowsEndereco] = await connection.query(sqlEndereco, [idCliente]);
             const [rowsTelefone] = await connection.query(sqlTelefone, [idCliente]);
             const [rowsClientes] = await connection.query(sqlClientes, [idCliente]);
-            return { rowsClientes, rowsEndereco, rowsTelefone };
+            return { rowsClientes, rowsEndereco, rowsTelefone, rowsPedido, rowsEntrega };
         } catch (error) {
             connection.rollback();
             throw error;
