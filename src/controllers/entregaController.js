@@ -85,12 +85,13 @@ const entregaController = {
             }
 
             // 2. VALIDAÇÃO DO STATUS (Mais clara)
-            const statusValidos = ["calculado", "transito", "entregue", "cancelado"];
+            const statusValidos = ["calculado", "em transito", "entregue", "cancelado"];
             if (!statusEntrega || !statusValidos.includes(situacaoEntrega)) {
                 return res.status(400).json({
                     message: `Status de entrega inválido. Por favor, insira um dos seguintes: ${statusValidos.join(', ')}.`
                 });
             }
+            console.log(idEntrega);
 
             // 3. VERIFICAÇÃO DE EXISTÊNCIA (Tratamento de 404)
             // É crucial verificar se a entrega existe antes de tentar atualizar
@@ -104,7 +105,7 @@ const entregaController = {
             const resultado = await entregaModel.updateEntrega(idEntrega, situacaoEntrega);
 
             // 5. RESPOSTA
-            if (resultado.affectedRows > 0) {
+            if (resultado[0].affectedRows > 0) {
                 return res.status(200).json({ message: "Status da Entrega atualizado com sucesso!", data: resultado });
             } else {
                 // Caso a operação SQL não altere nenhuma linha (e.g., status já era o mesmo)
@@ -162,12 +163,12 @@ const entregaController = {
             const entregaSelecionada = await entregaModel.selectEntrega(idEntrega);
 
             if (entregaSelecionada.length === 0) {
-                return res.status(404).json({ message: "O ID em questão não possui cliente algum cadastrado." });
+                return res.status(404).json({ message: "O ID em questão não possui entrega alguma cadastrada." });
             }
 
             const resultado = await entregaModel.deleteEntrega(idEntrega);
 
-            if (resultado && resultado.affectedRows === 1) {
+            if (resultado[0].affectedRows === 1) {
                 res.status(200).json({ message: 'Entrega excluída com sucesso', data: resultado });
             } else {
                 // Lança um erro se a exclusão falhar no Model

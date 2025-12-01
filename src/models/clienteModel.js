@@ -279,7 +279,7 @@ const clienteModel = {
             const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
             const sqlClientes = 'DELETE FROM clientes WHERE idCliente = ?;';
             const sqlPedidos = 'DELETE FROM pedidos WHERE idCliente = ?;';
-            const sqlEntregas = 'DELETE FROM entregas WHERE idPedido = IN (?);';
+            const sqlEntregas = 'DELETE FROM entregas WHERE idPedido IN (?);';
             const sqlSelectEntrega = 'SELECT idPedido FROM pedidos WHERE idCliente = ?';
             const [rowsSelectEntrega] = await connection.query(sqlSelectEntrega, [idCliente]);
             const idPedido = rowsSelectEntrega.map(row => row.idPedido);

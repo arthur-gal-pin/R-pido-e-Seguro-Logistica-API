@@ -82,6 +82,7 @@ const pedidoModel = {
      */
     selectPedido: async (pedidoId) => {
         const sql = pedidoId ? 'SELECT * FROM pedidos WHERE idPedido=?;' : 'SELECT * FROM pedidos;';
+        console.log(pedidoId);
         const values = [pedidoId];
         const [rows] = await pool.query(sql, values);
         return rows;

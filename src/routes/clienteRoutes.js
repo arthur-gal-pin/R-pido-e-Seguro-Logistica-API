@@ -1,7 +1,5 @@
 const express = require('express');
 const clienteRoutes = express.Router();
-const telefoneRoutes = express.Router();
-const enderecoRoutes = express.Router();
 
 const { clienteController } = require('../controllers/clienteController');
 
@@ -28,4 +26,4 @@ clienteRoutes.put('/enderecos/:idEndereco', enderecoController.atualizarEndereco
 clienteRoutes.delete('/enderecos/:idEndereco', enderecoController.excluirEndereco);
 
 
-module.exports = { clienteRoutes, telefoneRoutes, enderecoRoutes }
+module.exports = {clienteRoutes}; 
