@@ -87,7 +87,7 @@ const entregaModel = {
         try {
             //Requerimento para precoDeslocamento
             const [rowsSelect] = await connection.query(
-                'SELECT distanciaKM, valorKM, pesoVargaKG, valorKG, urgencia FROM pedidos WHERE idPedidoFK =',
+                'SELECT distanciaKM, valorKM, pesoCargaKG, valorKG, urgencia FROM pedidos WHERE idPedido = ? ',
                 [idPedidoFK]
             );
             // Obter os valores da primeira linha do resultado
@@ -97,7 +97,7 @@ const entregaModel = {
             //Definição das variáveis básicas
             const pDistanciaKM = rowsSelect[0].distanciaKM;
             const pValorKM = rowsSelect[0].valorKM;
-            const pPesoKG = rowsSelect[0].pesoVargaKG;
+            const pPesoKG = rowsSelect[0].pesoCargaKG;
             const pValorKG = rowsSelect[0].valorKG;
             const pUrgencia = rowsSelect[0].urgencia;
             //Operações básicas para formular o valorBase
@@ -107,12 +107,13 @@ const entregaModel = {
             //Aplicação das operações da regra de negócio
             const taxaExtra = (pPesoKG > 50) ? 15 : 0;
             const acrescimoCru = (pUrgencia == 'urgente') ? (valorBase / 5) : 0;
+            console.log(acrescimoCru);
             const acrescimo = parseFloat(acrescimoCru.toFixed(2));
             const descontoCru = ((valorBase + acrescimo) > 500) ? ((valorBase + acrescimo) / 10) : 0;
             const desconto = parseFloat(descontoCru.toFixed(2));
             const valorFinal = (valorBase + acrescimo + taxaExtra - desconto);
             //Comando query do SQL
-            const sql = "INSERT INTO entregas (idPedidoFK, valorDistancia, valorPeso, acrescimo, desconto, taxaExtra, valorTotal, statusEntrega) VALUES (?,?,?,?,?,?,?,?)";
+            const sql = "INSERT INTO entregas (idPedido, valorDistancia, valorPeso, acrescimo, desconto, taxaExtra, valorTotal, statusEntrega) VALUES (?,?,?,?,?,?,?,?)";
             const values = [idPedidoFK, precoDeslocamento, precoPeso, acrescimo, desconto, taxaExtra, valorFinal, statusEntrega];
             const [rows] = await connection.query(sql, values);
             await connection.commit();
@@ -151,8 +152,8 @@ const entregaModel = {
     }
      */
     updateEntrega: async (idEntrega, statusEntrega) => {
-        const sql = "UPDATE entregas SET statusEntrega = ? WHERE idEntrega = ? AND idPedidoFK = ?;";
-        const values = [statusEntrega, idEntrega, idPedidoFK];
+        const sql = "UPDATE entregas SET statusEntrega = ? WHERE idEntrega = ?;";
+        const values = [statusEntrega, idEntrega];
         const rows = await pool.query(sql, values);
         return rows;
     },

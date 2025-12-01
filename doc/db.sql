@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS Telefones (
     CONSTRAINT fk_telefones_clientes FOREIGN KEY (idClienteFK) REFERENCES Clientes (idCliente)
 );
 
-CREATE TABLE IF NOT EXISTS Endereco (
+CREATE TABLE IF NOT EXISTS Enderecos (
 	idEndereco INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     idClienteFK INT NOT NULL,
     logradouro VARCHAR (50) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS Pedidos (
 
 CREATE TABLE IF NOT EXISTS Entregas (
     idEntrega INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    idPedido INT NOT NULL UNIQUE,
+    idPedido INT NOT NULL,
     valorDistancia DECIMAL(8,2) NOT NULL,
     valorPeso DECIMAL(8,2) NOT NULL,
     acrescimo DECIMAL(8,2) NOT NULL,

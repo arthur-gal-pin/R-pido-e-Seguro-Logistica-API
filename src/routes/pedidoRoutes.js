@@ -10,4 +10,4 @@ pedidoRoutes.put('/pedidos/:idPedido', pedidoController.atualizarPedido);
 pedidoRoutes.delete('/pedidos/:idPedido', pedidoController.cancelarPedido);
 
 
-module.exports = pedidoRoutes;
+module.exports = {pedidoRoutes};

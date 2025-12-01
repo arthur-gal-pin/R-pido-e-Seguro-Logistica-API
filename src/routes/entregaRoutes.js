@@ -3,10 +3,10 @@ const entregaRoutes = express.Router();
 
 const { entregaController } = require('../controllers/entregaController');
 
-entregaRoutes.post('/:idPedidoFK', entregaController.inserirEntrega);
-entregaRoutes.get('/', entregaController.buscarEntrega);
-entregaRoutes.put('/:idEntrega', entregaController.atualizarEntrega);
-entregaRoutes.delete('/:idEntrega', entregaController.cancelarEntrega);
+entregaRoutes.post('/entregas/:idPedidoFK', entregaController.inserirEntrega);
+entregaRoutes.get('/entregas', entregaController.buscarEntrega);
+entregaRoutes.put('/entregas/:idEntrega', entregaController.atualizarEntrega);
+entregaRoutes.delete('/entregas/:idEntrega', entregaController.cancelarEntrega);
 
 
-module.exports = entregaRoutes;
+module.exports = {entregaRoutes};
