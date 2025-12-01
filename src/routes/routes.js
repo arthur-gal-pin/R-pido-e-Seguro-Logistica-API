@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-const entregaRoutes = require('./entregaRoutes'); 
+const entregaRoutes = require('./entregaRoutes');
 const clienteRoutes = require('./clienteRoutes');
-const pedidoRoutes = require('./pedidoRoutes'); 
+const pedidoRoutes = require('./pedidoRoutes');
 
-router.use('/', entregaRoutes);
-router.use('/', clienteRoutes);
-router.use('/', pedidoRoutes);
+// Usa cada Router importado
+router.use('/entregas', entregaRoutes);
+router.use('/clientes', clienteRoutes);
+router.use('/pedidos', pedidoRoutes);
 
-module.exports = router;
+module.exports = router; // Exporta direto o Router
