@@ -13,16 +13,20 @@ const padronizarTexto = (texto) => {
 const pedidoController = {
     addPedido: async (req, res) => {
         try {
-            const { idCliente, urgencia, distancia, peso, valorItem, valorDistancia } = req.body;
+            let { idCliente, urgencia, distancia, peso, valorItem, valorDistancia } = req.body;
             if (!idCliente || !urgencia || !distancia || !peso || !valorItem || !valorDistancia) {
                 return res.status(400).json({ message: 'Por favor, verifique os dados adicionados e envie novamente' });
             }
+            urgencia = padronizarTexto(urgencia);
+            console.log(urgencia);
 
+             // const consultaIdCliente = await clienteModel.selecionarCliente
+            
             if (!urgencia || typeof urgencia !== 'string' && urgencia !== "urgente" && urgencia !== 'nao urgente') {
                 return res.status(400).json({ message: "Valores para registro inválidos (urgência deve ser apenas 'urgente' ou 'nao urgente')." });
             }
             if (isNaN(distancia) || isNaN(peso) || isNaN(valorItem) || isNaN(valorDistancia)) {
-                return res.status(400).json({ message: "Valores para registro inválidos (valores que precisam ser números não são.)." });
+                return res.status(400).json({ message: "Valores para registro inválidos (valores que precisam ser números não são)." });
             };
 
             const resultado = await pedidoModel.insertPedido(idCliente, urgencia, distancia, peso, valorItem, valorDistancia)
@@ -34,21 +38,37 @@ const pedidoController = {
     },
     selecionarPedido: async (req, res) => {
         try {
-            const pedidoId = Number(req.query.pedidoId);
-            if (!pedidoId || !Number.isInteger(pedidoId) || pedidoId <= 0) {
-                return res.status(400).json({ message: 'Por favor, forneça um id válido' });
+            // Se req.query.id for undefined, Number(req.query.id) resulta em NaN, que é falsy.
+            // Se for string vazia, resulta em 0, que é falsy.
+            const id = Number(req.query.id);
+
+            // Bloco para buscar todos os clientes (ID não fornecido ou inválido)
+            if (!id || isNaN(id) || id <= 0 || !Number.isInteger(id)) {
+                const resultado = await pedidoModel.selectPedido();
+
+                if (resultado.length === 0) {
+                    return res.status(200).json({ message: "Não há nenhum pedido cadastrado na base de dados no momento." });
+                }
+                return res.status(200).json({ message: "Resultado dos dados listados:", data: resultado });
             }
-            const resultado = await pedidoModel.selectPedido(pedidoId);
-            res.status(200).json({ message: 'Lista dos pedidos', data: resultado });
+
+            // Bloco para buscar cliente por ID específico (ID válido)
+            const resultado = await pedidoModel.selectPedido(id);
+
+            if (resultado.length === 0) {
+                return res.status(404).json({ message: "O ID em questão não possui pedido algum cadastrado." });
+            }
+            return res.status(200).json({ message: "Resultado dos dados listados", data: resultado });
 
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: 'Ocorreu um erro no servidor', errorMessage: error.message });
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
     selecionarPedidoCliente: async (req, res) => {
         try {
-            const clienteId = Number(req.params.pedidoId);
+            const clienteId = Number(req.params.idCliente);
+            console.log(req.params.idPedido);
             if (!clienteId || !Number.isInteger(clienteId) || clienteId <= 0) {
                 return res.status(400).json({ message: 'Por favor, forneça um id válido' });
             }
@@ -63,40 +83,89 @@ const pedidoController = {
     atualizarPedido: async (req, res) => {
         try {
             const idPedido = Number(req.params.idPedido);
+
+            // 1. F: FETCH (Busca e Validação Inicial)
             if (isNaN(idPedido) || !Number.isInteger(idPedido) || idPedido <= 0) {
                 return res.status(400).json({ message: "Forneça um identificador (idPedido) válido." });
             }
 
-            const pedidoAtual = await pedidoModel.selectPedido(idPedido);
+            const pedidoAtualArr = await pedidoModel.selectPedido(idPedido);
 
-            if (!pedidoAtual || pedidoAtual.length === 0) {
+            if (!pedidoAtualArr || pedidoAtualArr.length === 0) {
                 return res.status(404).json({ message: 'Registro não localizado para o ID fornecido.' });
             }
+            const pedidoAtual = pedidoAtualArr[0]; // Pega o primeiro e único pedido
 
-            let { urgencia, distancia, peso, valorPeso, valorDistancia } = req.body;
-            urgencia = padronizarTexto(urgencia);
-            // Pré-processamento e validação básica dos campos
+            // 2. M: MERGE (Fusão dos Dados Antigos e Novos)
+            // Desestrutura os novos valores, que podem ser undefined, null, "" ou valores válidos
+            let { urgencia, distancia, peso, valorItem, valorDistancia } = req.body;
 
-            if (!urgencia || typeof urgencia !== 'string' && urgencia !== "urgente" && urgencia !== 'nao urgente') {
-                return res.status(400).json({ message: "Valores para registro inválidos (urgência deve ser apenas 'urgente' ou 'nao urgente')." });
+            // Tratamento da urgência (texto)
+            const urgenciaRecebida = (urgencia !== undefined) ? padronizarTexto(urgencia) : undefined;
+
+            // Lógica de MERGE para cada campo:
+            // Se o campo for enviado (não é undefined), usa o novo valor.
+            // Se não foi enviado (é undefined), usa o valor atual do banco.
+
+            // Merge para Urgência (Texto)
+            const novaUrgencia = (urgenciaRecebida !== undefined && urgenciaRecebida !== '')
+                ? urgenciaRecebida
+                : pedidoAtual.urgencia;
+
+            // Merge para campos Numéricos
+            const novaDistancia = (distancia !== undefined)
+                ? Number(distancia)
+                : pedidoAtual.distanciaKM;
+
+            const novoPeso = (peso !== undefined)
+                ? Number(peso)
+                : pedidoAtual.pesoCargaKG;
+
+            // CORRIGIDO: Usando 'valorItem' para consistência (no banco é valorKG)
+            const novoValorItem = (valorItem !== undefined)
+                ? Number(valorItem)
+                : pedidoAtual.valorKG;
+
+            const novoValorDistancia = (valorDistancia !== undefined)
+                ? Number(valorDistancia)
+                : pedidoAtual.valorKM;
+
+            // 3. V: VALIDATE (Validação da Nova Estrutura Mesclada)
+            const tiposValidos = ['urgente', 'nao urgente'];
+
+            if (!tiposValidos.includes(novaUrgencia)) {
+                return res.status(400).json({
+                    message: `Urgência inválida: ${novaUrgencia}. Deve ser 'urgente' ou 'nao urgente'.`
+                });
             }
 
-            const novaUrgencia = urgencia ?? pedidoAtual[0].urgencia;
-            const novaDistancia = distancia ?? pedidoAtual[0].distanciaKM;
-            const novoPeso = peso ?? pedidoAtual[0].pesoVargaKG;
-            const novoValorPeso = valorPeso ?? pedidoAtual[0].valorKG;
-            const novoValorDistancia = valorDistancia ?? pedidoAtual[0].valorKM;
-            const resultado = await pedidoModel.updatePedido(novaUrgencia, novaDistancia, novoPeso, novoValorPeso, novoValorDistancia, idPedido);
+            // Valida se os valores mesclados são, de fato, números válidos
+            if (isNaN(novaDistancia) || isNaN(novoPeso) || isNaN(novoValorItem) || isNaN(novoValorDistancia)) {
+                return res.status(400).json({
+                    message: "Distância, peso e valores devem ser números válidos (verifique se os campos foram deixados vazios ou com texto)."
+                });
+            }
+
+            // 4. U: UPDATE (Atualização no Model)
+            const resultado = await pedidoModel.updatePedido(
+                novaUrgencia,
+                novaDistancia,
+                novoPeso,
+                novoValorItem, // Renomeado para consistência
+                novoValorDistancia,
+                idPedido
+            );
             return res.status(200).json({ message: "Registro Atualizado com Sucesso.", result: resultado });
 
         } catch (error) {
             console.error(error);
-            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
+            // Uso de res.status().json() para garantir que a resposta seja enviada
+            return res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
     cancelarPedido: async (req, res) => {
         try {
-            const pedidoId = Number(req.params.pedidoId);
+            const pedidoId = Number(req.params.idPedido);
             if (!pedidoId || !Number.isInteger(pedidoId) || isNaN(pedidoId) || pedidoId <= 0) {
                 return res.status(400).json({ message: 'Por favor, forneça um ID válido' })
             }
@@ -105,7 +174,7 @@ const pedidoController = {
                 throw new Error('O pedido não foi encontrado');
             } else {
                 const resultado = await pedidoModel.deletePedido(pedidoId);
-                if (resultado.affectedRows == 1) {
+                if (resultado.pedidoRows.affectedRows === 1) {
                     res.status(200).json({ message: 'O pedido foi cancelado com sucesso', data: resultado })
                 } else {
                     throw new Error('Não foi possível cancelar o pedido.');

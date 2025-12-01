@@ -5,7 +5,7 @@ const pedidoModel = {
         const connection = await pool.getConnection(); // Obtém a conexão do pool
         await connection.beginTransaction(); // Inicia a transação
         try {
-            const pedidoSql = 'INSERT INTO pedidos (idClienteFK, urgencia, distanciaKM, pesoCargaKG, valorKM, valorKG) VALUES (?,?,?,?,?,?) ;';
+            const pedidoSql = 'INSERT INTO pedidos (idCliente, urgencia, distanciaKM, pesoCargaKG, valorKM, valorKG) VALUES (?,?,?,?,?,?) ;';
             const pedidoValues = [idClienteFK, urgencia, distancia, peso, valorPeso, valorDistancia];
             const [pedidoRows] = await connection.query(pedidoSql, pedidoValues);
             const idPedidoNovo = pedidoRows.insertId;
@@ -20,7 +20,7 @@ const pedidoModel = {
             const desconto = parseFloat(descontoCru.toFixed(2));
             const valorFinal = (valorBase + acrescimo + taxaExtra - desconto);
             //Detalhes SQL sobre a criacão dos registros de entrega.
-            const entregaSql = 'INSERT INTO entregas (idPedidoFK, valorDistancia, valorPeso, acrescimo, desconto, taxaExtra, valorTotal, statusEntrega) VALUES (?,?,?,?,?,?,?,?);';
+            const entregaSql = 'INSERT INTO entregas (idPedido, valorDistancia, valorPeso, acrescimo, desconto, taxaExtra, valorTotal, statusEntrega) VALUES (?,?,?,?,?,?,?,?);';
             const entregaValues = [idPedidoNovo, precoDeslocamento, precoPeso, acrescimo, desconto, taxaExtra, valorFinal, "calculado"];
             const [entregaRows] = await connection.query(entregaSql, entregaValues);
             await connection.commit();
@@ -41,7 +41,7 @@ const pedidoModel = {
         return rows;
     },
     selectPedidoCliente: async (idCliente) => {
-        const sql = 'SELECT * FROM pedidos WHERE idClienteFK = ?;';
+        const sql = 'SELECT * FROM pedidos WHERE idCliente = ?;'; //Mudar a tabela para idClienteFK
         const values = [idCliente];
         const [rows] = await pool.query(sql, values);
         return rows;
@@ -64,7 +64,7 @@ const pedidoModel = {
             const descontoCru = ((valorBase + acrescimo) > 500) ? ((valorBase + acrescimo) / 10) : 0;
             const desconto = parseFloat(descontoCru.toFixed(2));
             const valorFinal = (valorBase + acrescimo + taxaExtra - desconto);
-            const entregaSql = 'UPDATE entregas SET valorDistancia = ?, valorPeso = ?, acrescimo = ?, desconto = ?, taxaExtra = ?, valorTotal = ? WHERE idPedidoFK = ?;'; const entregaValues = [precoDeslocamento, precoPeso, acrescimo, desconto, taxaExtra, valorFinal, idPedido];
+            const entregaSql = 'UPDATE entregas SET valorDistancia = ?, valorPeso = ?, acrescimo = ?, desconto = ?, taxaExtra = ?, valorTotal = ? WHERE idPedido = ?;'; const entregaValues = [precoDeslocamento, precoPeso, acrescimo, desconto, taxaExtra, valorFinal, idPedido];
             const [entregaRows] = await connection.query(entregaSql, entregaValues);
             await connection.commit();
             return { pedidoRows, entregaRows };
@@ -78,10 +78,24 @@ const pedidoModel = {
         }
     },
     deletePedido: async (pedidoId) => {
-        const sql = 'DELETE FROM pedidos WHERE idPedido = ?;';
-        const values = [pedidoId];
-        const [rows] = await pool.query(sql, values);
-        return rows;
+        const connection = await pool.getConnection(); // Obtém a conexão do pool
+        await connection.beginTransaction(); // Inicia a transação
+        try {
+            const entregaSql = 'DELETE FROM entregas WHERE idPedido = ?;';
+            const pedidoSql = 'DELETE FROM pedidos WHERE idPedido = ?;';
+            const values = [pedidoId];
+            const [entregaRows] = await pool.query(entregaSql, values);
+            const [pedidoRows] = await pool.query(pedidoSql, values);
+            return {entregaRows, pedidoRows};
+
+        } catch (error) {
+            connection.rollback();
+            throw error;
+        } finally {
+            if (connection) {
+                connection.release();
+            }
+        }
     }
 }
 
