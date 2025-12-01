@@ -1,5 +1,24 @@
 const { pedidoModel } = require('../models/pedidoModel');
 
+/**
+ * @function padronizarTexto
+ * @param {String} texto 
+ * @returns {texto}
+ * @example
+ * const padronizarTexto = (texto) => {
+    // Garante que o texto existe antes de tentar normalizar
+    if (!texto) return '';
+
+    return texto
+        .toLowerCase() // 1. Converte para minúsculas
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // 2. Remove acentos e caracteres diacríticos
+}
+        // Saída esperada
+        Texto original: 'Não olhe.'
+
+        Texto padronizado: 'nao olhe'
+ */
 const padronizarTexto = (texto) => {
     // Garante que o texto existe antes de tentar normalizar
     if (!texto) return '';
@@ -9,8 +28,16 @@ const padronizarTexto = (texto) => {
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "") // 2. Remove acentos e caracteres diacríticos
 }
-
 const pedidoController = {
+
+    /**
+         * @description Adiciona (executa um create) um novo pedido ao Banco de Dados
+         * @function addPedido
+         * @async
+         * @param {Request} req Requisição HTTP
+         * @param {Response} res Resposta HTTP
+         * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do insert
+         */
     addPedido: async (req, res) => {
         try {
             let { idCliente, urgencia, distancia, peso, valorItem, valorDistancia } = req.body;
@@ -36,6 +63,14 @@ const pedidoController = {
             res.status(500).json({ message: 'Ocorreu um erro no servidor', errorMessage: error.message });
         }
     },
+    /**
+     * @description Retorna todos os pedidos que estão inseridas no Banco de Dados.
+     * @function selecionarPedido
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Array<Object>>} Retorna como resposta da requisição, os dados com informações do select
+     */
     selecionarPedido: async (req, res) => {
         try {
             // Se req.query.id for undefined, Number(req.query.id) resulta em NaN, que é falsy.
@@ -65,6 +100,13 @@ const pedidoController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /** 
+     * @description Retorna os pedidos que estão inseridas no Banco de Dados de acordo com o ID do cliente.
+     * @function selecionarPedidoCliente
+     * @param {Request} req 
+     * @param {Response} res 
+     * @returns {Promise<Array<Object>>} Retorna como resposta da requisição, os dados com informações do select
+     */
     selecionarPedidoCliente: async (req, res) => {
         try {
             const clienteId = Number(req.params.idCliente);
@@ -80,6 +122,14 @@ const pedidoController = {
             res.status(500).json({ message: 'Ocorreu um erro no servidor', errorMessage: error.message });
         }
     },
+    /**
+     * @description Atualiza o pedido através do ID via parâmetro
+     * @function atualizarPedido
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do update
+     */
     atualizarPedido: async (req, res) => {
         try {
             const idPedido = Number(req.params.idPedido);
@@ -163,6 +213,14 @@ const pedidoController = {
             return res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Cancela o pedido através do ID via parâmetro.
+     * @function cancelarPedido
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados dom informações do delete.
+     */
     cancelarPedido: async (req, res) => {
         try {
             const pedidoId = Number(req.params.idPedido);

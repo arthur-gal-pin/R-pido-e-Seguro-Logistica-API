@@ -5,8 +5,15 @@ const removerAcentos = (texto) => {
     if (!texto) return '';
     return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
-
 const clienteController = {
+    /**
+         * @description Retorna todos os clientes listados inseridos no Banco de Dados
+         * @function buscarClientes
+         * @async
+         * @param {Request} req Requisição HTTP
+         * @param {Response} res Resposta HTTP
+         * @returns {Promise<Array<Object>>} Retorna o conteúdo dos dados da requisição
+         */
     buscarClientes: async (req, res) => {
         try {
             // Se req.query.id for undefined, Number(req.query.id) resulta em NaN, que é falsy.
@@ -36,6 +43,14 @@ const clienteController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Retorna os os dados de cada cliente com a requisição por CPF
+     * @function buscarClientePorCpf
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Array<Object>>} Retorna o conteúdo dos dados da requisição
+     */
     buscarClientePorCpf: async (req, res) => {
         try {
             const cpfParam = req.params.cpfCliente;
@@ -59,6 +74,14 @@ const clienteController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Adiciona os dados de cada cliente para o Banco de Dados
+     * @function adicionarCliente
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do insert
+     */
     adicionarCliente: async (req, res) => {
         try {
             let {
@@ -129,6 +152,14 @@ const clienteController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Atualiza os dados do cliente através do ID
+     * @function atualizarCliente
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do update 
+     */
     atualizarCliente: async (req, res) => {
         try {
             const idCliente = Number(req.params.idCliente);
@@ -175,6 +206,14 @@ const clienteController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Deleta os dados de um cliente de acordo com seu ID
+     * @function excluirCliente
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do delete
+     */
     excluirCliente: async (req, res) => {
         try {
             const id = Number(req.params.idCliente);
@@ -206,6 +245,14 @@ const clienteController = {
 }
 
 const telefoneController = {
+    /**
+     * @description Retorna os dados de todos os telefones que estão inseridos no Banco de Dados, além de listar o telefone por ID através de uma query 
+     * @function buscarTelefoneId
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Array<Object>>} Retorna o conteúdo com os dados da requisição 
+     */
     buscarTelefoneId: async (req, res) => {
         try {
             const idTelefone = Number(req.query.id);
@@ -237,6 +284,14 @@ const telefoneController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Retorna os dados do(s) telefone(s) do cliente via parâmetro, ou seja, exibe o(s) telefone(s) através do ID do cliente respectivo
+     * @function buscarTelefoneCliente
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP 
+     * @returns {Promise<Array<Object>>} Retorna o conteúdo com os dados da requisição
+     */
     buscarTelefoneCliente: async (req, res) => {
         try {
             const idClienteFK = Number(req.params.idClienteFK);
@@ -256,6 +311,14 @@ const telefoneController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Adiciona um telefone relacionado à um cliente através de uma requisição feita pelo corpo da página
+     * @function adicionarTelefone
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do create
+     */
     adicionarTelefone: async (req, res) => {
         try {
             let { idClienteFK, tipoTelefone, numeroTelefone } = req.body;
@@ -291,6 +354,14 @@ const telefoneController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Atualiza os dados do telefone relacionado à um cliente através de uma requisição feita pelo corpo da página
+     * @function atualizarTelefone
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do update
+     */
     atualizarTelefone: async (req, res) => {
         try {
             // 1. FETCH & Validação do ID 
@@ -342,6 +413,14 @@ const telefoneController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Deleta os dados do(s) telefone(s) através de seu ID
+     * @function deletarTelefone
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do delete
+     */
     deletarTelefone: async (req, res) => {
         try {
             const idTelefone = Number(req.params.idTelefone);
@@ -369,9 +448,12 @@ const telefoneController = {
 
 const enderecoController = {
     /**
-     * @route GET /enderecos
-     * @route GET /enderecos/:idEndereco
      * @description Busca todos os endereços ou um endereço por ID.
+     * @function buscarEnderecos
+     * @async
+     * @param {Request} req Objeto da requisição HTTP
+     * @param {Response} res Objeto de resposta HTTP
+     * @returns {Promise<Array<Object>>} Retorna um Objeto JSON contendo todos os endereços inseridos no Banco de Dados
      */
     buscarEnderecos: async (req, res) => {
         try {
@@ -402,8 +484,12 @@ const enderecoController = {
     },
 
     /**
-     * @route GET /clientes/:idClienteFK/enderecos
      * @description Busca todos os endereços de um cliente específico.
+     * @function buscarEnderecoPorCliente
+     * @async
+     * @param {Request} req Objeto da requisição HTTP
+     * @param {Response} res Objeto de resposta HTTP
+     * @returns {Promise<Array<Object>>} Retorna um Objeto JSON contendo todos os endereços inseridos no Banco de Dados de acordo com o cliente
      */
     buscarEnderecoPorCliente: async (req, res) => {
         try {
@@ -427,8 +513,12 @@ const enderecoController = {
     },
 
     /**
-     * @route POST /enderecos
      * @description Adiciona um novo endereço a um cliente.
+     * @function adicionarEndereco
+     * @async
+     * @param {Request} req Objeto da requisição HTTP
+     * @param {Response} res Objeto de resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do create
      */
     adicionarEndereco: async (req, res) => {
         try {
@@ -480,8 +570,12 @@ const enderecoController = {
     },
 
     /**
-     * @route PUT /enderecos/:idEndereco
-     * @description Atualiza um endereço por completo (método PUT).
+     * @description Atualiza um endereço por completo.
+     * @function atualizarEndereco
+     * @async
+     * @param {Request} req Objeto da requisição HTTP
+     * @param {Response} res Objeto de resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do update
      */
     atualizarEndereco: async (req, res) => {
         try {
@@ -535,8 +629,12 @@ const enderecoController = {
     },
 
     /**
-     * @route DELETE /enderecos/:idEndereco
      * @description Exclui um endereço.
+     * @function excluirEndereco
+     * @async
+     * @param {Request} req Objeto da requisição HTTP
+     * @param {Response} res Objeto de resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do delete
      */
     excluirEndereco: async (req, res) => {
         try {

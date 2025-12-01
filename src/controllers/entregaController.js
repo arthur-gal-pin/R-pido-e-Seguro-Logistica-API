@@ -1,6 +1,24 @@
 const { entregaModel } = require('../models/entregaModel');
 
+/**
+ * @function padronizarTexto
+ * @param {String} texto 
+ * @returns {texto}
+ * @example
+ * const padronizarTexto = (texto) => {
+    // Garante que o texto existe antes de tentar normalizar
+    if (!texto) return '';
 
+    return texto
+        .toLowerCase() // 1. Converte para minúsculas
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // 2. Remove acentos e caracteres diacríticos
+}
+        // Saída esperada
+        Texto original: 'Não olhe.'
+
+        Texto padronizado: 'nao olhe'
+ */
 const padronizarTexto = (texto) => {
     // Garante que o texto existe antes de tentar normalizar
     if (!texto) return '';
@@ -9,10 +27,17 @@ const padronizarTexto = (texto) => {
         .toLowerCase() // 1. Converte para minúsculas
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "") // 2. Remove acentos e caracteres diacríticos
-        .replace(/ /g, ""); // 3. Remove todos os espaços
 }
 
 const entregaController = {
+    /**
+     * @description Retorna todas as entregas que estão inseridas no Banco de Dados, ou, via query, retorna os dados específicos de uma entrega através do ID.
+     * @function buscarEntrega
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Array<Object>>} Retorna como resposta da requisição, os dados com informações do select
+     */
     buscarEntrega: async (req, res) => {
         try {
             const idEntrega = Number(req.query.id);
@@ -38,6 +63,14 @@ const entregaController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Atualiza a entrega através do envio do ID via parâmetro.
+     * @function atualizarEntrega
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do update 
+     */
     atualizarEntrega: async (req, res) => {
         try {
             const idEntrega = Number(req.params.idEntrega);
@@ -84,6 +117,14 @@ const entregaController = {
             return res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Adiciona os dados de uma entrega para o Banco de Dados
+     * @function inserirEntrega
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do insert
+     */
     inserirEntrega: async (req, res) => {
         try {
             const idPedidoFK = Number(req.params.idPedidoFK);
@@ -103,6 +144,14 @@ const entregaController = {
             res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     },
+    /**
+     * @description Deleta os dados de um cliente de acordo com seu ID.
+     * @function cancelarEntrega
+     * @async
+     * @param {Request} req Requisição HTTP
+     * @param {Response} res Resposta HTTP
+     * @returns {Promise<Object>} Retorna como resposta da requisição, os dados com informações do delete
+     */
     cancelarEntrega: async (req, res) => {
         try {
             const idEntrega = Number(req.params.idEntrega);
