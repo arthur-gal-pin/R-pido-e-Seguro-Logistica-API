@@ -3,11 +3,11 @@ const entregaRoutes = express.Router();
 
 const { pedidoController } = require('../controllers/pedidoController');
 
-entregaRoutes.post('/pedidos', pedidoController.addPedido);
-entregaRoutes.get('/pedidos', pedidoController.selecionarPedido);
-entregaRoutes.get('/clientes/:cpfCliente', pedidoController.selecionarPedidoCliente);
-entregaRoutes.put('/clientes/:idCliente', pedidoController.atualizarPedido);
-entregaRoutes.delete('/clientes/:idCliente', pedidoController.cancelarPedido);
+entregaRoutes.post('/entregas', pedidoController.addPedido);
+entregaRoutes.get('/entregas', pedidoController.selecionarPedido);
+entregaRoutes.get('/entregas/:cpfCliente', pedidoController.selecionarPedidoCliente);
+entregaRoutes.put('/entregas/:idCliente', pedidoController.atualizarPedido);
+entregaRoutes.delete('/entregas/:idCliente', pedidoController.cancelarPedido);
 
 
-module.exports = { entregaRoutes };
+module.exports = entregaRoutes ;
