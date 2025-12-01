@@ -147,7 +147,7 @@ const clienteModel = {
         "result": {
         "fieldCount": 0,
         "affectedRows": 1,
-        "insertId": ,
+        "insertId": 1,
         "info": "",
         "serverStatus": 2,
         "warningStatus": 0,
@@ -275,18 +275,18 @@ const clienteModel = {
         try {
             await connection.beginTransaction();
 
-            const sqlEndereco = 'DELETE FROM enderecos WHERE idClienteFK = ?;';
-            const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
+            // const sqlEndereco = 'DELETE FROM enderecos WHERE idClienteFK = ?;';
+            // const sqlTelefone = 'DELETE FROM telefones WHERE idClienteFK = ?;'
             const sqlClientes = 'DELETE FROM clientes WHERE idCliente = ?;';
-            const sqlPedidos = 'DELETE FROM pedidos WHERE idCliente = ?;';
-            const sqlEntregas = 'DELETE FROM entregas WHERE idPedido IN (?);';
-            const sqlSelectEntrega = 'SELECT idPedido FROM pedidos WHERE idCliente = ?';
-            const [rowsSelectEntrega] = await connection.query(sqlSelectEntrega, [idCliente]);
-            const idPedido = rowsSelectEntrega.map(row => row.idPedido);
-            const [rowsEntrega] = await connection.query(sqlEntregas, [idPedido]);
-            const [rowsPedido] = await connection.query(sqlPedidos, [idCliente])
-            const [rowsEndereco] = await connection.query(sqlEndereco, [idCliente]);
-            const [rowsTelefone] = await connection.query(sqlTelefone, [idCliente]);
+            // const sqlPedidos = 'DELETE FROM pedidos WHERE idCliente = ?;';
+            // const sqlEntregas = 'DELETE FROM entregas WHERE idPedido IN (?);';
+            // const sqlSelectEntrega = 'SELECT idPedido FROM pedidos WHERE idCliente = ?';
+            // const [rowsSelectEntrega] = await connection.query(sqlSelectEntrega, [idCliente]);
+            // const idPedido = rowsSelectEntrega.map(row => row.idPedido);
+            // const [rowsEntrega] = await connection.query(sqlEntregas, [idPedido]);
+            // const [rowsPedido] = await connection.query(sqlPedidos, [idCliente])
+            // const [rowsEndereco] = await connection.query(sqlEndereco, [idCliente]);
+            // const [rowsTelefone] = await connection.query(sqlTelefone, [idCliente]);
             const [rowsClientes] = await connection.query(sqlClientes, [idCliente]);
             return { rowsClientes, rowsEndereco, rowsTelefone, rowsPedido, rowsEntrega };
         } catch (error) {

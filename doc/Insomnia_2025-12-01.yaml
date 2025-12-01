@@ -2,14 +2,14 @@ type: collection.insomnia.rest/5.0
 schema_version: "5.1"
 name: entregasdb
 meta:
-  id: wrk_7c7acf5fba87442dad132463089f0c2c
-  created: 1764202510307
-  modified: 1764202510307
+  id: wrk_362326b7cc944b53a531609edb76c213
+  created: 1764604423295
+  modified: 1764604423295
   description: ""
 collection:
   - name: Clientes
     meta:
-      id: fld_3e07aa2b0c9c48f3bd437329851c9965
+      id: fld_1416293235d64aef99cab7db2f583e15
       created: 1764202520667
       modified: 1764202536369
       sortKey: -1764202520667
@@ -17,25 +17,25 @@ collection:
     children:
       - name: Telefone Controller
         meta:
-          id: fld_8ebd99b9e4c64df398c1380ce4228aed
+          id: fld_9ba18666ca7b43269f737639d82626d7
           created: 1764202549342
-          modified: 1764291122532
+          modified: 1764613558434
           sortKey: -1764202549342
           description: ""
         children:
-          - url: localhost:8081/telefones/
+          - url: localhost:8081/telefones
             name: Buscar Telefones
             meta:
-              id: req_1da88531be3f4e82a9d5af701584d0c1
+              id: req_fea3168f74f54bd6b88c48ab505b7b18
               created: 1764205291287
-              modified: 1764288583690
+              modified: 1764607176653
               isPrivate: false
               description: ""
               sortKey: -1764288583642
             method: GET
             parameters:
               - name: id
-                value: "2"
+                value: "3"
                 description: ""
                 disabled: false
             headers:
@@ -52,7 +52,7 @@ collection:
           - url: localhost:8081/telefones/5
             name: Atualizar Telefone
             meta:
-              id: req_605b3b2b7e9f4ab383d946cbb97d6c30
+              id: req_010cf4c8d0b447ae834c3a2fe4d1fbe9
               created: 1764205791066
               modified: 1764288593788
               isPrivate: false
@@ -82,7 +82,7 @@ collection:
           - url: localhost:8081/telefones/4
             name: Deletar Telefone
             meta:
-              id: req_2248e52d212b45abaa7a0bb1a3fd300f
+              id: req_63a0575ca09b4938bed0bad8a9b2b301
               created: 1764205809937
               modified: 1764288592013
               isPrivate: false
@@ -103,7 +103,7 @@ collection:
           - url: localhost:8081/telefones
             name: Adicionar Telefone
             meta:
-              id: req_6107d9807f9c4452aa0a0db2c447ea86
+              id: req_1988845939e7461cb68ff995bf3eb4e6
               created: 1764205838587
               modified: 1764288590315
               isPrivate: false
@@ -134,7 +134,7 @@ collection:
           - url: localhost:8081/telefones/2
             name: Buscar Telefone Cliente
             meta:
-              id: req_4ee16eec8da44f44afb19b3f9746b57b
+              id: req_b5356803cf2f447cb9802901942d2d34
               created: 1764207220854
               modified: 1764288588319
               isPrivate: false
@@ -154,16 +154,16 @@ collection:
               rebuildPath: true
       - name: Endereço Controller
         meta:
-          id: fld_5c49fa56a4884fb495cd426df5dba6a8
+          id: fld_222cd809527a49d59940df2db33eb8cc
           created: 1764202564980
-          modified: 1764291119808
+          modified: 1764613551985
           sortKey: -1764202564980
           description: ""
         children:
           - url: localhost:8081/enderecos/7
             name: Deletar Endereco
             meta:
-              id: req_135a261421d0425ab4a15f5ba5eeaeb6
+              id: req_257b8d4796bb4a178f60c70411791136
               created: 1764288612077
               modified: 1764291077166
               isPrivate: false
@@ -186,7 +186,7 @@ collection:
           - url: localhost:8081/enderecos/7
             name: Atualizar Endereco
             meta:
-              id: req_4ff317b521404b40ae884502b9070c63
+              id: req_7344f89332144a4ca3bcd512ae0beeaf
               created: 1764288697170
               modified: 1764291063320
               isPrivate: false
@@ -217,7 +217,7 @@ collection:
           - url: localhost:8081/enderecos/
             name: Adicionar Endereco
             meta:
-              id: req_edf970ce95524ab19630b1d7fad0ec05
+              id: req_66572e95b95b44c7972ed882f602d533
               created: 1764288699289
               modified: 1764290948843
               isPrivate: false
@@ -255,7 +255,7 @@ collection:
           - url: localhost:8081/enderecos/7
             name: buscarEnderecoCliente
             meta:
-              id: req_fdb9b3616f8542d5b7ba6d30903d8430
+              id: req_12a881fa435e4fc8aa576de9e074e9f9
               created: 1764288701234
               modified: 1764290541787
               isPrivate: false
@@ -278,18 +278,13 @@ collection:
           - url: localhost:8081/enderecos
             name: buscarEndereco
             meta:
-              id: req_ab94e2d9ccd14f3ba5a81d85a39cf1c9
+              id: req_f8a541fb774140529884d4bcd42138aa
               created: 1764288702927
-              modified: 1764290316469
+              modified: 1764607346695
               isPrivate: false
               description: ""
               sortKey: -1764288702927
             method: GET
-            parameters:
-              - name: id
-                value: "6"
-                description: ""
-                disabled: false
             headers:
               - name: User-Agent
                 value: insomnia/12.1.0
@@ -305,18 +300,18 @@ collection:
               rebuildPath: true
       - name: Cliente Controller
         meta:
-          id: fld_e6ec58652f404274a23d359541221581
+          id: fld_52824a4544b04a7da99a698343c14967
           created: 1764202693013
-          modified: 1764565597573
+          modified: 1764613548367
           sortKey: -1764202565080
           description: ""
         children:
-          - url: localhost:8081/clientes/22233344455
+          - url: localhost:8081/clientes/11122233301
             name: Buscar CPF
             meta:
-              id: req_299493abab4a43ae96beb70ed3b46663
+              id: req_a2a84f93f9304a6baaf00423d40d3b38
               created: 1764202527542
-              modified: 1764205565520
+              modified: 1764607436137
               isPrivate: false
               description: ""
               sortKey: -1764202700371
@@ -335,7 +330,7 @@ collection:
           - url: localhost:8081/clientes
             name: Buscar Clientes
             meta:
-              id: req_7f2b0317e5264f1eacf820088bd10ec5
+              id: req_5c587f82fe424e1ba610a6049d4a4508
               created: 1764202703963
               modified: 1764205707900
               isPrivate: false
@@ -361,7 +356,7 @@ collection:
           - url: localhost:8081/clientes/
             name: Adicionar Cliente
             meta:
-              id: req_42301b4554eb4668b01733510927e0e3
+              id: req_d7f4f082922b4fe99d27cfbac26289fe
               created: 1764202772975
               modified: 1764205690348
               isPrivate: false
@@ -401,7 +396,7 @@ collection:
           - url: localhost:8081/clientes/4
             name: Atualizar Cliente
             meta:
-              id: req_866b05b656084b098443ec4426d8e1ab
+              id: req_428fc5fdda85485098b11bbde7b9e126
               created: 1764202789897
               modified: 1764205212722
               isPrivate: false
@@ -427,12 +422,12 @@ collection:
                 send: true
                 store: true
               rebuildPath: true
-          - url: localhost:8081/clientes/3
+          - url: localhost:8081/clientes/1
             name: Deletar Cliente
             meta:
-              id: req_2a1927ba47dc4671a228357cb8b3debf
+              id: req_bcf4eaecd0204165898b5929a0d1699e
               created: 1764202800000
-              modified: 1764289260458
+              modified: 1764613865863
               isPrivate: false
               description: ""
               sortKey: -1764202700271
@@ -450,7 +445,7 @@ collection:
               rebuildPath: true
   - name: Pedidos
     meta:
-      id: fld_742c1ec999fb4186ac5dbba7cb2e8219
+      id: fld_8ab59c20426640d0b60fce262cd8d531
       created: 1764288804519
       modified: 1764288804519
       sortKey: -1764288804519
@@ -459,7 +454,7 @@ collection:
       - url: localhost:8081/pedidos/8
         name: Delete Pedido
         meta:
-          id: req_33266ae0a18d4085949b360f0e201668
+          id: req_2d19298ee72545d9af3972594dbb9499
           created: 1764291123412
           modified: 1764561717709
           isPrivate: false
@@ -482,7 +477,7 @@ collection:
       - url: localhost:8081/pedidos
         name: Insert Pedido
         meta:
-          id: req_1e7aa97e8eaf40019235adb03744103c
+          id: req_372bb2e653c54b43a1375aaa36fc8ef0
           created: 1764553933903
           modified: 1764561003832
           isPrivate: false
@@ -511,12 +506,12 @@ collection:
       - url: localhost:8081/pedidos/11
         name: Update Pedido
         meta:
-          id: req_1ccbe84f358049caa1f45e61ab039b97
+          id: req_6a62ccd91dbe49aba68130802df7ee49
           created: 1764553936628
-          modified: 1764561156637
+          modified: 1764610293711
           isPrivate: false
           description: ""
-          sortKey: -1764553936628
+          sortKey: -1764553935265.5
         method: PUT
         body:
           mimeType: application/json
@@ -542,7 +537,7 @@ collection:
       - url: localhost:8081/pedidos/2
         name: Select Pedido idCliente
         meta:
-          id: req_6fef5e6783804bd291ca8fa6cea4827f
+          id: req_9beac5411fe04e738588189201d422f9
           created: 1764553938109
           modified: 1764559759831
           isPrivate: false
@@ -565,18 +560,13 @@ collection:
       - url: localhost:8081/pedidos
         name: Select Pedido idPedido
         meta:
-          id: req_8cd07babcfad4cf0824ba667ab871bbd
+          id: req_d166e6b097ba4c4b9bf09fcb7904b1ec
           created: 1764553939429
-          modified: 1764559752422
+          modified: 1764610716784
           isPrivate: false
           description: ""
           sortKey: -1764553939429
         method: GET
-        parameters:
-          - name: id
-            value: ""
-            description: ""
-            disabled: false
         headers:
           - name: User-Agent
             value: insomnia/12.1.0
@@ -592,18 +582,18 @@ collection:
           rebuildPath: true
   - name: Entregas
     meta:
-      id: fld_75d35e67258e433fbc342f356afb1c3a
+      id: fld_8f876daeeddc4ad6a7f3a911f01d9acc
       created: 1764288819519
       modified: 1764288819519
       sortKey: -1764288819519
       description: ""
     children:
-      - url: localhost:8081/entregas/98
+      - url: localhost:8081/entregas/39
         name: Delete Entrega
         meta:
-          id: req_6cf1706d2b0c4887a21eb0f28c61c24a
+          id: req_e0ea873b42fb488d97f5ebf1cd327034
           created: 1764563897882
-          modified: 1764565451151
+          modified: 1764610352054
           isPrivate: false
           description: ""
           sortKey: -1764563897882
@@ -621,17 +611,25 @@ collection:
             send: true
             store: true
           rebuildPath: true
-      - url: localhost:8081/entregas/11
+      - url: localhost:8081/entregas/1
         name: Update Entrega
         meta:
-          id: req_d4ac90b10c71404ebe5b0dc510c320d0
+          id: req_23d1331f3c8548439660351261d6bc76
           created: 1764563901506
-          modified: 1764565648893
+          modified: 1764610660249
           isPrivate: false
           description: ""
           sortKey: -1764563901506
         method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"statusEntrega": "CANcELADO"
+            }
         headers:
+          - name: Content-Type
+            value: application/json
           - name: User-Agent
             value: insomnia/12.1.0
             description: ""
@@ -644,17 +642,25 @@ collection:
             send: true
             store: true
           rebuildPath: true
-      - url: localhost:8081/entregas
+      - url: localhost:8081/entregas/12
         name: Insert Entrega
         meta:
-          id: req_6933a88808dd4e1da02939cdbe482ab4
+          id: req_9f07ef187c3b4839a757916be36d686f
           created: 1764563904001
-          modified: 1764565609609
+          modified: 1764612696350
           isPrivate: false
           description: ""
           sortKey: -1764563904001
         method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"statusEntrega": "entregue"
+            }
         headers:
+          - name: Content-Type
+            value: application/json
           - name: User-Agent
             value: insomnia/12.1.0
             description: ""
@@ -670,18 +676,13 @@ collection:
       - url: localhost:8081/entregas
         name: Select Entrega
         meta:
-          id: req_5adfd780a1514161a9436f9679cba74c
+          id: req_ec830c4245604c7ea299e8b763a8fb63
           created: 1764563906627
-          modified: 1764565469544
+          modified: 1764604516250
           isPrivate: false
           description: ""
           sortKey: -1764563906627
         method: GET
-        parameters:
-          - name: id
-            value: "11"
-            description: ""
-            disabled: false
         headers:
           - name: User-Agent
             value: insomnia/12.1.0
@@ -698,13 +699,13 @@ collection:
 cookieJar:
   name: Default Jar
   meta:
-    id: jar_03da4e15ec34a2ef238b1f1b42a541439b99e86c
+    id: jar_976155f772d8407ca4bced62817c26d9
     created: 1764202510316
     modified: 1764202510316
 environments:
   name: Base Environment
   meta:
-    id: env_03da4e15ec34a2ef238b1f1b42a541439b99e86c
+    id: env_5275c61fe8be4c14b17af56cddb51b6f
     created: 1764202510312
     modified: 1764202510312
     isPrivate: false
