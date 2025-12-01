@@ -64,11 +64,10 @@ const pedidoModel = {
             const descontoCru = ((valorBase + acrescimo) > 500) ? ((valorBase + acrescimo) / 10) : 0;
             const desconto = parseFloat(descontoCru.toFixed(2));
             const valorFinal = (valorBase + acrescimo + taxaExtra - desconto);
-            const entregaSql = 'UPDATE entregas SET valorDistancia = ?, valorPeso = ?, acrescimo = ?, desconto = ?, taxaExtra = ?, valorTotal = ? WHERE idPedido = ?;';
-            const entregaValues = [precoDeslocamento, precoPeso, acrescimo, desconto, taxaExtra, valorFinal, idPedido];
+            const entregaSql = 'UPDATE entregas SET valorDistancia = ?, valorPeso = ?, acrescimo = ?, desconto = ?, taxaExtra = ?, valorTotal = ? WHERE idPedidoFK = ?;'; const entregaValues = [precoDeslocamento, precoPeso, acrescimo, desconto, taxaExtra, valorFinal, idPedido];
             const [entregaRows] = await connection.query(entregaSql, entregaValues);
             await connection.commit();
-            return {pedidoRows, entregaRows};
+            return { pedidoRows, entregaRows };
         } catch (error) {
             connection.rollback();
             throw error;

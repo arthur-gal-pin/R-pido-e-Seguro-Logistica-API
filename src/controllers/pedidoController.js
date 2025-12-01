@@ -34,11 +34,25 @@ const pedidoController = {
     },
     selecionarPedido: async (req, res) => {
         try {
-            const pedidoId = Number(req.params.pedidoId);
+            const pedidoId = Number(req.query.pedidoId);
             if (!pedidoId || !Number.isInteger(pedidoId) || pedidoId <= 0) {
                 return res.status(400).json({ message: 'Por favor, forneça um id válido' });
             }
             const resultado = await pedidoModel.selectPedido(pedidoId);
+            res.status(200).json({ message: 'Lista dos pedidos', data: resultado });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Ocorreu um erro no servidor', errorMessage: error.message });
+        }
+    },
+    selecionarPedidoCliente: async (req, res) => {
+        try {
+            const clienteId = Number(req.params.pedidoId);
+            if (!clienteId || !Number.isInteger(clienteId) || clienteId <= 0) {
+                return res.status(400).json({ message: 'Por favor, forneça um id válido' });
+            }
+            const resultado = await pedidoModel.selectPedidoCliente(clienteId);
             res.status(200).json({ message: 'Lista dos pedidos', data: resultado });
 
         } catch (error) {
@@ -81,21 +95,26 @@ const pedidoController = {
         }
     },
     cancelarPedido: async (req, res) => {
-        const pedidoId = Number(req.params.pedidoId);
-        if (!pedidoId || !Number.isInteger(pedidoId)) {
-            return res.status(400).json({ message: 'Por favor, forneça um ID válido' })
-        }
-        const pedidoSelecionado = await pedidoModel.selectPedido(pedidoId);
-        if (pedidoSelecionado.length === 0) {
-            throw new Error('O pedido não foi encontrado');
-        } else {
-            const resultado = await pedidoModel.deletePedido(pedidoId);
-            if (resultado.affectedrows == 1) {
-                res.status(200).json({ message: 'O pedido foi cancelado com sucesso', data: resultado })
-            } else {
-                throw new Error('Não foi possível cancelar o pedido.');
-
+        try {
+            const pedidoId = Number(req.params.pedidoId);
+            if (!pedidoId || !Number.isInteger(pedidoId) || isNaN(pedidoId) || pedidoId <= 0) {
+                return res.status(400).json({ message: 'Por favor, forneça um ID válido' })
             }
+            const pedidoSelecionado = await pedidoModel.selectPedido(pedidoId);
+            if (pedidoSelecionado.length === 0) {
+                throw new Error('O pedido não foi encontrado');
+            } else {
+                const resultado = await pedidoModel.deletePedido(pedidoId);
+                if (resultado.affectedRows == 1) {
+                    res.status(200).json({ message: 'O pedido foi cancelado com sucesso', data: resultado })
+                } else {
+                    throw new Error('Não foi possível cancelar o pedido.');
+
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Ocorreu um erro no servidor.", errorMessage: error.message });
         }
     }
 }
